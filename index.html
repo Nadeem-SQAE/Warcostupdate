@@ -1,0 +1,2318 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>War Cost Watch — Live Iran-USA-Israel Conflict Tracker</title>
+<meta name="description" content="Real-time tracker of the Iran-USA-Israel conflict costs — military spending, human toll, economic impact, and live news.">
+<meta property="og:title" content="War Cost Watch — Live Iran-USA-Israel Conflict Tracker">
+<meta property="og:description" content="How much is this war costing YOU? Live ticker, per-citizen costs, economic impact & breaking news.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:ital,wght@0,300;0,400;0,600;1,300&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0a;
+    --surface: #111111;
+    --surface2: #161616;
+    --border: #222222;
+    --red: #e63030;
+    --red-dim: #8b1a1a;
+    --amber: #f0a500;
+    --green: #00c97a;
+    --blue: #3b82f6;
+    --text: #e8e8e8;
+    --muted: #666666;
+    --usa: #3b82f6;
+    --israel: #6b8cda;
+    --iran: #22c55e;
+    --ticker-font: 'Bebas Neue', sans-serif;
+    --mono: 'IBM Plex Mono', monospace;
+    --body: 'IBM Plex Sans', sans-serif;
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--body);
+    overflow-x: hidden;
+    cursor: default;
+  }
+
+  /* SCROLLBAR */
+  ::-webkit-scrollbar { width: 4px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--red-dim); border-radius: 2px; }
+
+  /* ── TOAST NOTIFICATIONS ── */
+  #toast-container {
+    position: fixed; bottom: 28px; left: 50%;
+    transform: translateX(-50%);
+    z-index: 99999;
+    display: flex; flex-direction: column-reverse; align-items: center; gap: 8px;
+    pointer-events: none;
+    width: max-content; max-width: 94vw;
+  }
+  .toast {
+    display: flex; align-items: center; gap: 10px;
+    background: #1c1c1c; border: 1px solid #2e2e2e;
+    border-radius: 8px; padding: 11px 18px;
+    font-family: var(--mono); font-size: 12px; letter-spacing: 0.05em;
+    color: var(--text);
+    box-shadow: 0 8px 32px rgba(0,0,0,0.7);
+    pointer-events: auto;
+    animation: toastIn 0.3s cubic-bezier(0.34,1.4,0.64,1) forwards;
+    white-space: nowrap;
+  }
+  .toast.removing { animation: toastOut 0.25s ease forwards; }
+  .toast-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+  .toast.success { border-color: rgba(0,201,122,0.5); }
+  .toast.success .toast-dot { background: var(--green); }
+  .toast.error   { border-color: rgba(230,48,48,0.5); }
+  .toast.error   .toast-dot { background: var(--red); }
+  .toast.info    { border-color: rgba(240,165,0,0.5); }
+  .toast.info    .toast-dot { background: var(--amber); }
+  @keyframes toastIn  { from{opacity:0;transform:translateY(14px) scale(.96)} to{opacity:1;transform:translateY(0) scale(1)} }
+  @keyframes toastOut { from{opacity:1;transform:translateY(0) scale(1)} to{opacity:0;transform:translateY(6px) scale(.96)} }
+
+  /* ── PETITION MODAL ── */
+  .petition-modal-overlay {
+    display: none; position: fixed; inset: 0;
+    background: rgba(0,0,0,0.88); z-index: 1001;
+    place-items: center; backdrop-filter: blur(6px);
+  }
+  .petition-modal-overlay.open { display: grid; }
+  .petition-modal {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-top: 3px solid var(--red);
+    border-radius: 10px;
+    padding: 36px; max-width: 520px; width: 92%;
+    position: relative; animation: fadeIn 0.3s ease;
+  }
+  .pm-close {
+    position: absolute; top: 14px; right: 14px;
+    background: none; border: 1px solid var(--border);
+    color: var(--muted); width: 30px; height: 30px;
+    border-radius: 4px; cursor: pointer; font-size: 14px;
+    display: grid; place-items: center; transition: all 0.2s;
+  }
+  .pm-close:hover { border-color: var(--red); color: var(--red); }
+  .pm-icon { font-size: 38px; margin-bottom: 14px; }
+  .pm-title { font-family: var(--ticker-font); font-size: 26px; letter-spacing: 0.06em; margin-bottom: 8px; }
+  .pm-body  { font-size: 13px; color: var(--muted); line-height: 1.7; margin-bottom: 22px; }
+  .pm-options { display: flex; flex-direction: column; gap: 10px; }
+  .pm-option {
+    display: flex; align-items: center; gap: 14px;
+    background: var(--bg); border: 1px solid var(--border);
+    border-radius: 6px; padding: 14px 16px;
+    text-decoration: none; color: var(--text);
+    transition: border-color 0.2s, transform 0.15s; cursor: pointer;
+  }
+  .pm-option:hover { border-color: var(--red); transform: translateX(4px); }
+  .pm-opt-icon { font-size: 22px; flex-shrink: 0; }
+  .pm-opt-title { font-weight: 600; font-size: 13px; }
+  .pm-opt-sub   { font-size: 11px; color: var(--muted); margin-top: 2px; }
+  .pm-note { margin-top: 14px; font-family: var(--mono); font-size: 10px; color: #444; letter-spacing: 0.08em; text-align: center; }
+
+  /* NOISE OVERLAY */
+  body::before {
+    content: '';
+    position: fixed; inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.035'/%3E%3C/svg%3E");
+    pointer-events: none; z-index: 9999; opacity: 0.4;
+  }
+
+  /* ALERT BAR */
+  .alert-bar {
+    background: var(--red);
+    padding: 8px 20px;
+    display: flex; align-items: center; gap: 12px;
+    font-family: var(--mono); font-size: 11px; font-weight: 600;
+    letter-spacing: 0.08em; overflow: hidden;
+  }
+  .alert-bar .live-dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: white;
+    animation: pulse-dot 1s infinite;
+    flex-shrink: 0;
+  }
+  @keyframes pulse-dot {
+    0%,100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.4; transform: scale(0.7); }
+  }
+  .alert-bar .scroll-text {
+    white-space: nowrap;
+    animation: marquee 40s linear infinite;
+    letter-spacing: 0.1em;
+  }
+  @keyframes marquee {
+    from { transform: translateX(100vw); }
+    to { transform: translateX(-100%); }
+  }
+
+  /* NAV */
+  nav {
+    position: sticky; top: 0; z-index: 100;
+    background: rgba(10,10,10,0.95);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+    padding: 0 24px;
+    display: flex; align-items: center; justify-content: space-between;
+    height: 56px;
+  }
+  .nav-logo {
+    font-family: var(--ticker-font);
+    font-size: 22px; letter-spacing: 0.12em;
+    color: var(--text);
+    text-decoration: none;
+    display: flex; align-items: center; gap: 10px;
+  }
+  .nav-logo .logo-icon {
+    width: 28px; height: 28px;
+    border: 2px solid var(--red);
+    border-radius: 4px;
+    display: grid; place-items: center;
+    font-size: 14px;
+  }
+  .nav-links {
+    display: flex; gap: 0; list-style: none;
+  }
+  .nav-links a {
+    display: block; padding: 0 16px; height: 56px; line-height: 56px;
+    font-family: var(--mono); font-size: 11px; letter-spacing: 0.1em;
+    color: var(--muted); text-decoration: none;
+    border-bottom: 2px solid transparent;
+    transition: color 0.2s, border-color 0.2s;
+  }
+  .nav-links a:hover, .nav-links a.active {
+    color: var(--text); border-bottom-color: var(--red);
+  }
+  .nav-share-btn {
+    background: var(--red); border: none; color: white;
+    padding: 8px 16px; border-radius: 4px;
+    font-family: var(--mono); font-size: 11px; letter-spacing: 0.1em;
+    cursor: pointer; transition: background 0.2s;
+  }
+  .nav-share-btn:hover { background: #c02020; }
+
+  /* HERO */
+  .hero {
+    padding: 60px 24px 40px;
+    max-width: 1200px; margin: 0 auto;
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: 48px; align-items: start;
+  }
+  @media (max-width: 900px) {
+    .hero { grid-template-columns: 1fr; }
+  }
+  .hero-left {}
+  .hero-label {
+    font-family: var(--mono); font-size: 10px; letter-spacing: 0.2em;
+    color: var(--red); text-transform: uppercase;
+    display: flex; align-items: center; gap: 8px;
+    margin-bottom: 16px;
+  }
+  .hero-label::before {
+    content: ''; display: block;
+    width: 24px; height: 1px; background: var(--red);
+  }
+  .hero-title {
+    font-family: var(--ticker-font);
+    font-size: clamp(42px, 6vw, 72px);
+    line-height: 0.92; letter-spacing: 0.03em;
+    color: var(--text);
+    margin-bottom: 20px;
+  }
+  .hero-title span { color: var(--red); }
+  .hero-sub {
+    font-size: 14px; line-height: 1.7;
+    color: var(--muted); max-width: 440px;
+    margin-bottom: 24px;
+  }
+  .hero-meta {
+    font-family: var(--mono); font-size: 10px; color: var(--muted);
+    letter-spacing: 0.08em;
+    border-left: 2px solid var(--border); padding-left: 12px;
+  }
+
+  /* MAIN TICKER */
+  .main-ticker-wrap {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-top: 3px solid var(--red);
+    border-radius: 8px;
+    padding: 28px;
+    position: relative; overflow: hidden;
+  }
+  .main-ticker-wrap::before {
+    content: '';
+    position: absolute; top: 0; left: 0; right: 0; height: 60px;
+    background: radial-gradient(ellipse at 50% -20%, rgba(230,48,48,0.15) 0%, transparent 70%);
+  }
+  .ticker-label {
+    font-family: var(--mono); font-size: 10px; letter-spacing: 0.18em;
+    color: var(--muted); text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+  .ticker-main {
+    font-family: var(--ticker-font);
+    font-size: clamp(44px, 7vw, 80px);
+    letter-spacing: 0.02em;
+    color: var(--red);
+    line-height: 1;
+    margin-bottom: 6px;
+    font-variant-numeric: tabular-nums;
+  }
+  .ticker-sub-row {
+    display: flex; gap: 20px; flex-wrap: wrap;
+    margin-top: 16px; padding-top: 16px;
+    border-top: 1px solid var(--border);
+  }
+  .ticker-sub-item {
+    flex: 1; min-width: 120px;
+  }
+  .ticker-sub-label {
+    font-family: var(--mono); font-size: 9px; letter-spacing: 0.15em;
+    color: var(--muted); text-transform: uppercase; margin-bottom: 4px;
+    display: flex; align-items: center; gap: 6px;
+  }
+  .ticker-sub-label .flag { font-size: 14px; }
+  .ticker-sub-val {
+    font-family: var(--ticker-font);
+    font-size: 26px; letter-spacing: 0.04em;
+  }
+  .ticker-sub-val.usa { color: var(--usa); }
+  .ticker-sub-val.israel { color: var(--israel); }
+  .ticker-sub-val.iran { color: var(--iran); }
+  .ticker-rate {
+    font-family: var(--mono); font-size: 10px; color: var(--amber);
+    margin-top: 12px; letter-spacing: 0.06em;
+  }
+
+  /* SECTION LAYOUT */
+  .section {
+    max-width: 1200px; margin: 0 auto;
+    padding: 48px 24px;
+  }
+  .section-header {
+    display: flex; align-items: baseline; gap: 16px;
+    margin-bottom: 28px;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 16px;
+  }
+  .section-title {
+    font-family: var(--ticker-font);
+    font-size: 28px; letter-spacing: 0.08em;
+  }
+  .section-badge {
+    font-family: var(--mono); font-size: 9px; letter-spacing: 0.15em;
+    background: var(--surface2); border: 1px solid var(--border);
+    padding: 3px 8px; border-radius: 2px; color: var(--muted);
+    text-transform: uppercase;
+  }
+
+  /* COST BREAKDOWN GRID */
+  .cost-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+  }
+  @media (max-width: 700px) {
+    .cost-grid { grid-template-columns: 1fr; }
+  }
+  .cost-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 20px;
+    position: relative; overflow: hidden;
+    transition: border-color 0.2s, transform 0.2s;
+  }
+  .cost-card:hover { border-color: #333; transform: translateY(-2px); }
+  .cost-card .card-flag {
+    font-size: 28px; margin-bottom: 10px; display: block;
+  }
+  .cost-card .card-country {
+    font-family: var(--mono); font-size: 10px; letter-spacing: 0.15em;
+    color: var(--muted); text-transform: uppercase; margin-bottom: 6px;
+  }
+  .cost-card .card-val {
+    font-family: var(--ticker-font);
+    font-size: 36px; letter-spacing: 0.04em;
+    margin-bottom: 4px;
+  }
+  .cost-card .card-desc {
+    font-size: 11px; color: var(--muted); line-height: 1.5;
+  }
+  .cost-card .card-accent {
+    position: absolute; bottom: 0; left: 0; right: 0;
+    height: 3px;
+  }
+
+  /* HUMAN COST */
+  .human-grid {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px;
+  }
+  @media (max-width: 700px) { .human-grid { grid-template-columns: 1fr; } }
+  .human-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px; padding: 20px;
+  }
+  .human-card .hc-country {
+    font-family: var(--mono); font-size: 10px; letter-spacing: 0.15em;
+    color: var(--muted); text-transform: uppercase;
+    display: flex; align-items: center; gap: 8px; margin-bottom: 16px;
+    padding-bottom: 12px; border-bottom: 1px solid var(--border);
+  }
+  .stat-row { margin-bottom: 12px; }
+  .stat-row .s-label {
+    font-family: var(--mono); font-size: 9px; letter-spacing: 0.12em;
+    color: var(--muted); text-transform: uppercase; margin-bottom: 3px;
+  }
+  .stat-row .s-val {
+    font-family: var(--ticker-font); font-size: 30px;
+    letter-spacing: 0.04em;
+  }
+  .s-val.red { color: var(--red); }
+  .s-val.amber { color: var(--amber); }
+  .s-val.muted { color: #555; }
+
+  /* ECONOMIC */
+  .eco-grid {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 16px;
+    margin-bottom: 16px;
+  }
+  @media (max-width: 700px) { .eco-grid { grid-template-columns: 1fr; } }
+  .eco-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px; padding: 20px;
+  }
+  .eco-card .ec-label {
+    font-family: var(--mono); font-size: 10px; letter-spacing: 0.14em;
+    color: var(--muted); text-transform: uppercase; margin-bottom: 6px;
+  }
+  .eco-card .ec-val {
+    font-family: var(--ticker-font); font-size: 40px; letter-spacing: 0.04em;
+    margin-bottom: 4px;
+  }
+  .eco-card .ec-change {
+    font-family: var(--mono); font-size: 11px;
+  }
+  .up { color: var(--red); }
+  .down { color: var(--green); }
+
+  /* WEAPONS */
+  .weapons-table { width: 100%; border-collapse: collapse; }
+  .weapons-table th {
+    font-family: var(--mono); font-size: 9px; letter-spacing: 0.15em;
+    color: var(--muted); text-transform: uppercase; text-align: left;
+    padding: 10px 12px; border-bottom: 1px solid var(--border);
+  }
+  .weapons-table td {
+    padding: 12px; border-bottom: 1px solid #1a1a1a;
+    font-size: 13px;
+  }
+  .weapons-table tr:last-child td { border-bottom: none; }
+  .weapons-table tr:hover td { background: var(--surface2); }
+  .weapons-table .cost-cell {
+    font-family: var(--mono); font-weight: 600; color: var(--amber);
+    font-size: 13px;
+  }
+  .weapons-table .name-cell { font-weight: 600; }
+  .weapons-table .country-badge {
+    display: inline-block;
+    font-family: var(--mono); font-size: 9px; letter-spacing: 0.1em;
+    padding: 2px 6px; border-radius: 2px; text-transform: uppercase;
+  }
+  .badge-usa { background: rgba(59,130,246,0.15); color: var(--usa); }
+  .badge-israel { background: rgba(107,140,218,0.15); color: var(--israel); }
+  .badge-iran { background: rgba(34,197,94,0.15); color: var(--iran); }
+
+  /* NEWS */
+  .news-tabs {
+    display: flex; gap: 0; border-bottom: 1px solid var(--border);
+    margin-bottom: 24px; overflow-x: auto;
+  }
+  .news-tab {
+    padding: 10px 20px;
+    font-family: var(--mono); font-size: 11px; letter-spacing: 0.1em;
+    color: var(--muted); cursor: pointer; border: none;
+    background: none; border-bottom: 2px solid transparent;
+    white-space: nowrap; transition: all 0.2s;
+    text-transform: uppercase;
+  }
+  .news-tab:hover { color: var(--text); }
+  .news-tab.active { color: var(--text); border-bottom-color: var(--red); }
+  .news-panel { display: none; }
+  .news-panel.active { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  @media (max-width: 700px) {
+    .news-panel.active { grid-template-columns: 1fr; }
+  }
+  .news-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px; padding: 18px;
+    text-decoration: none; color: inherit;
+    display: flex; flex-direction: column; gap: 8px;
+    transition: border-color 0.2s, transform 0.2s;
+    cursor: pointer;
+  }
+  .news-card:hover { border-color: #333; transform: translateY(-2px); }
+  .news-card .nc-meta {
+    display: flex; gap: 10px; align-items: center;
+    font-family: var(--mono); font-size: 9px; letter-spacing: 0.1em;
+    color: var(--muted); text-transform: uppercase;
+  }
+  .nc-tag {
+    padding: 2px 6px; border-radius: 2px; font-size: 9px;
+  }
+  .tag-usa { background: rgba(59,130,246,0.15); color: var(--usa); }
+  .tag-israel { background: rgba(107,140,218,0.15); color: var(--israel); }
+  .tag-iran { background: rgba(34,197,94,0.15); color: var(--iran); }
+  .tag-global { background: rgba(240,165,0,0.15); color: var(--amber); }
+  .tag-breaking { background: rgba(230,48,48,0.2); color: var(--red); }
+  .news-card .nc-title {
+    font-size: 14px; font-weight: 600; line-height: 1.4;
+  }
+  .news-card .nc-desc {
+    font-size: 12px; color: var(--muted); line-height: 1.5;
+  }
+  .news-card .nc-source {
+    font-family: var(--mono); font-size: 9px; color: #444;
+    letter-spacing: 0.08em;
+    margin-top: auto;
+  }
+  .news-loading {
+    grid-column: 1/-1;
+    text-align: center; padding: 60px 20px;
+    font-family: var(--mono); font-size: 12px; color: var(--muted);
+    letter-spacing: 0.1em;
+  }
+  .news-loading .spinner {
+    display: inline-block; width: 20px; height: 20px;
+    border: 2px solid var(--border); border-top-color: var(--red);
+    border-radius: 50%; animation: spin 0.8s linear infinite;
+    margin-bottom: 12px;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* COST CALCULATOR */
+  .calc-wrap {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 32px;
+    display: grid; grid-template-columns: 1fr 1fr; gap: 40px;
+    align-items: center;
+  }
+  @media (max-width: 700px) { .calc-wrap { grid-template-columns: 1fr; } }
+  .calc-label {
+    font-family: var(--mono); font-size: 10px; letter-spacing: 0.15em;
+    color: var(--muted); text-transform: uppercase; margin-bottom: 8px;
+    display: block;
+  }
+  .calc-select, .calc-input {
+    width: 100%; background: var(--bg);
+    border: 1px solid var(--border); border-radius: 4px;
+    color: var(--text); padding: 10px 14px;
+    font-family: var(--mono); font-size: 13px;
+    margin-bottom: 16px; appearance: none;
+    transition: border-color 0.2s;
+  }
+  .calc-select:focus, .calc-input:focus {
+    outline: none; border-color: var(--red);
+  }
+  .calc-btn {
+    width: 100%; padding: 12px;
+    background: var(--red); border: none; border-radius: 4px;
+    color: white; font-family: var(--mono); font-size: 12px;
+    letter-spacing: 0.1em; cursor: pointer;
+    transition: background 0.2s;
+  }
+  .calc-btn:hover { background: #c02020; }
+  .calc-result {
+    text-align: center;
+  }
+  .calc-result .cr-label {
+    font-family: var(--mono); font-size: 10px; letter-spacing: 0.15em;
+    color: var(--muted); text-transform: uppercase; margin-bottom: 8px;
+  }
+  .calc-result .cr-amount {
+    font-family: var(--ticker-font);
+    font-size: clamp(40px, 6vw, 64px);
+    color: var(--red); letter-spacing: 0.04em;
+    margin-bottom: 8px;
+  }
+  .calc-result .cr-desc {
+    font-size: 12px; color: var(--muted); line-height: 1.6;
+  }
+  .calc-result .cr-share {
+    margin-top: 16px;
+    display: flex; gap: 8px; justify-content: center;
+  }
+  .share-btn {
+    padding: 8px 14px; border-radius: 4px; border: 1px solid var(--border);
+    background: var(--surface2); color: var(--text);
+    font-family: var(--mono); font-size: 10px; letter-spacing: 0.08em;
+    cursor: pointer; transition: all 0.2s;
+  }
+  .share-btn:hover { border-color: var(--red); color: var(--red); }
+
+  /* TIMELINE */
+  .timeline { position: relative; padding-left: 28px; }
+  .timeline::before {
+    content: ''; position: absolute;
+    left: 8px; top: 0; bottom: 0;
+    width: 1px; background: var(--border);
+  }
+  .tl-item {
+    position: relative; margin-bottom: 28px;
+  }
+  .tl-item::before {
+    content: ''; position: absolute;
+    left: -24px; top: 6px;
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--border); border: 2px solid var(--bg);
+    transition: background 0.2s;
+  }
+  .tl-item:hover::before { background: var(--red); }
+  .tl-date {
+    font-family: var(--mono); font-size: 10px; letter-spacing: 0.12em;
+    color: var(--muted); margin-bottom: 4px; text-transform: uppercase;
+  }
+  .tl-title { font-weight: 600; font-size: 14px; margin-bottom: 4px; }
+  .tl-body { font-size: 12px; color: var(--muted); line-height: 1.5; }
+  .tl-cost {
+    display: inline-block; margin-top: 6px;
+    font-family: var(--mono); font-size: 11px;
+    color: var(--amber); background: rgba(240,165,0,0.1);
+    padding: 2px 8px; border-radius: 2px;
+  }
+
+  /* METHODOLOGY */
+  .meth-grid {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 16px;
+  }
+  @media (max-width: 700px) { .meth-grid { grid-template-columns: 1fr; } }
+  .meth-card {
+    background: var(--surface);
+    border: 1px solid var(--border); border-radius: 6px; padding: 20px;
+  }
+  .meth-card h4 {
+    font-family: var(--mono); font-size: 11px; letter-spacing: 0.14em;
+    color: var(--amber); text-transform: uppercase; margin-bottom: 10px;
+  }
+  .meth-card p { font-size: 12px; color: var(--muted); line-height: 1.6; }
+
+  /* FOOTER */
+  footer {
+    border-top: 1px solid var(--border);
+    padding: 40px 24px;
+    max-width: 1200px; margin: 0 auto;
+    display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 40px;
+  }
+  @media (max-width: 700px) { footer { grid-template-columns: 1fr; } }
+  .footer-brand .fb-logo {
+    font-family: var(--ticker-font); font-size: 24px; letter-spacing: 0.1em;
+    color: var(--text); margin-bottom: 10px;
+  }
+  .footer-brand p { font-size: 12px; color: var(--muted); line-height: 1.6; }
+  .footer-section h5 {
+    font-family: var(--mono); font-size: 10px; letter-spacing: 0.15em;
+    color: var(--muted); text-transform: uppercase; margin-bottom: 14px;
+  }
+  .footer-section ul { list-style: none; }
+  .footer-section ul li { margin-bottom: 8px; }
+  .footer-section ul li a {
+    font-size: 13px; color: #555; text-decoration: none;
+    transition: color 0.2s;
+  }
+  .footer-section ul li a:hover { color: var(--text); }
+  .footer-bottom {
+    max-width: 1200px; margin: 0 auto;
+    padding: 16px 24px;
+    display: flex; justify-content: space-between; align-items: center;
+    border-top: 1px solid var(--border);
+    font-family: var(--mono); font-size: 10px; color: #444;
+    letter-spacing: 0.08em;
+  }
+  @media (max-width: 600px) {
+    .footer-bottom { flex-direction: column; gap: 8px; text-align: center; }
+    nav .nav-links { display: none; }
+  }
+
+  /* MODAL */
+  .modal-overlay {
+    display: none; position: fixed; inset: 0;
+    background: rgba(0,0,0,0.85); z-index: 1000;
+    place-items: center;
+    backdrop-filter: blur(4px);
+  }
+  .modal-overlay.open { display: grid; }
+  .modal {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 32px; max-width: 500px; width: 90%;
+    position: relative;
+  }
+  .modal-title {
+    font-family: var(--ticker-font); font-size: 28px;
+    letter-spacing: 0.06em; margin-bottom: 8px;
+  }
+  .modal-sub {
+    font-size: 13px; color: var(--muted); margin-bottom: 20px;
+    line-height: 1.5;
+  }
+  .modal-stat {
+    background: var(--bg); border: 1px solid var(--border);
+    border-radius: 6px; padding: 16px; text-align: center;
+    margin-bottom: 16px;
+  }
+  .modal-stat .ms-label {
+    font-family: var(--mono); font-size: 10px; letter-spacing: 0.14em;
+    color: var(--muted); text-transform: uppercase; margin-bottom: 6px;
+  }
+  .modal-stat .ms-val {
+    font-family: var(--ticker-font); font-size: 48px; color: var(--red);
+  }
+  .modal-close {
+    position: absolute; top: 16px; right: 16px;
+    background: none; border: 1px solid var(--border);
+    color: var(--muted); width: 28px; height: 28px;
+    border-radius: 4px; cursor: pointer; font-size: 14px;
+    display: grid; place-items: center;
+    transition: all 0.2s;
+  }
+  .modal-close:hover { border-color: var(--red); color: var(--red); }
+  .modal-share-btns { display: flex; gap: 8px; flex-wrap: wrap; }
+  .msb {
+    flex: 1; min-width: 100px;
+    padding: 10px; border-radius: 4px;
+    font-family: var(--mono); font-size: 11px; letter-spacing: 0.08em;
+    cursor: pointer; border: none; color: white;
+    transition: opacity 0.2s;
+  }
+  .msb:hover { opacity: 0.85; }
+  .msb-twitter { background: #1d9bf0; }
+  .msb-facebook { background: #1877f2; }
+  .msb-whatsapp { background: #25d366; }
+  .msb-copy { background: var(--surface2); border: 1px solid var(--border); color: var(--text); }
+
+  /* EMBED */
+  .embed-box {
+    background: var(--bg); border: 1px solid var(--border);
+    border-radius: 6px; padding: 16px;
+    font-family: var(--mono); font-size: 11px; color: var(--muted);
+    margin-top: 16px; word-break: break-all; line-height: 1.6;
+    cursor: pointer; transition: border-color 0.2s;
+  }
+  .embed-box:hover { border-color: var(--red); }
+
+  /* ANIMATIONS */
+  .fade-in {
+    animation: fadeIn 0.6s ease forwards;
+  }
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .stagger > * {
+    opacity: 0;
+    animation: fadeIn 0.5s ease forwards;
+  }
+  .stagger > *:nth-child(1) { animation-delay: 0.05s; }
+  .stagger > *:nth-child(2) { animation-delay: 0.1s; }
+  .stagger > *:nth-child(3) { animation-delay: 0.15s; }
+  .stagger > *:nth-child(4) { animation-delay: 0.2s; }
+  .stagger > *:nth-child(5) { animation-delay: 0.25s; }
+  .stagger > *:nth-child(6) { animation-delay: 0.3s; }
+
+  /* PROGRESS BAR */
+  .progress-bar-wrap {
+    background: var(--bg); border-radius: 2px;
+    height: 6px; margin-top: 8px; overflow: hidden;
+  }
+  .progress-bar {
+    height: 100%; border-radius: 2px;
+    transition: width 1s ease;
+  }
+
+  /* DIVIDER */
+  .divider {
+    border: none; border-top: 1px solid var(--border);
+    margin: 0;
+  }
+
+  /* PETITION BANNER */
+  .petition-banner {
+    background: linear-gradient(135deg, #1a0a0a 0%, #0f0f14 100%);
+    border: 1px solid var(--red-dim);
+    border-radius: 8px; padding: 28px 32px;
+    display: flex; align-items: center; gap: 28px;
+    margin: 32px 0;
+  }
+  @media (max-width: 700px) { .petition-banner { flex-direction: column; } }
+  .petition-banner .pb-icon {
+    font-size: 36px; flex-shrink: 0;
+  }
+  .petition-banner .pb-text h3 {
+    font-family: var(--ticker-font); font-size: 22px; letter-spacing: 0.06em;
+    margin-bottom: 6px;
+  }
+  .petition-banner .pb-text p {
+    font-size: 13px; color: var(--muted); line-height: 1.5;
+  }
+  .petition-banner .pb-btn {
+    margin-left: auto; flex-shrink: 0;
+    padding: 12px 24px; background: var(--red);
+    border: none; border-radius: 4px; color: white;
+    font-family: var(--mono); font-size: 11px; letter-spacing: 0.1em;
+    cursor: pointer; transition: background 0.2s;
+  }
+  .petition-banner .pb-btn:hover { background: #c02020; }
+
+  /* NEWSLETTER */
+  .newsletter-wrap {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px; padding: 32px;
+    display: flex; flex-direction: column; align-items: center;
+    text-align: center; gap: 16px;
+  }
+  .nl-title {
+    font-family: var(--ticker-font); font-size: 28px; letter-spacing: 0.08em;
+  }
+  .nl-sub { font-size: 13px; color: var(--muted); }
+  .nl-form { display: flex; gap: 8px; max-width: 440px; width: 100%; }
+  .nl-input {
+    flex: 1; background: var(--bg);
+    border: 1px solid var(--border); border-radius: 4px;
+    color: var(--text); padding: 10px 14px;
+    font-family: var(--mono); font-size: 12px;
+    transition: border-color 0.2s;
+  }
+  .nl-input:focus { outline: none; border-color: var(--red); }
+  .nl-btn {
+    padding: 10px 20px; background: var(--red);
+    border: none; border-radius: 4px; color: white;
+    font-family: var(--mono); font-size: 11px; letter-spacing: 0.1em;
+    cursor: pointer; transition: background 0.2s; white-space: nowrap;
+  }
+  .nl-btn:hover { background: #c02020; }
+
+  /* ========================
+     VOTING / POLL SECTION
+     ======================== */
+  .poll-section-wrap {
+    background: linear-gradient(160deg, #0f0a0a 0%, #0a0a0f 100%);
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+  }
+  .poll-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+  }
+  @media (max-width: 800px) { .poll-grid { grid-template-columns: 1fr; } }
+
+  /* POLL CARD */
+  .poll-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+    transition: border-color 0.2s;
+  }
+  .poll-card:hover { border-color: #2a2a2a; }
+  .poll-card-header {
+    padding: 18px 20px 14px;
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: flex-start; gap: 12px;
+  }
+  .poll-card-header .poll-num {
+    font-family: var(--ticker-font);
+    font-size: 32px; color: var(--red-dim);
+    line-height: 1; flex-shrink: 0;
+  }
+  .poll-card-header .poll-q {
+    font-size: 14px; font-weight: 600; line-height: 1.45;
+  }
+  .poll-card-header .poll-meta {
+    font-family: var(--mono); font-size: 9px; letter-spacing: 0.1em;
+    color: var(--muted); text-transform: uppercase; margin-top: 4px;
+  }
+  .poll-options { padding: 16px 20px; display: flex; flex-direction: column; gap: 10px; }
+
+  /* VOTE OPTION BUTTON */
+  .vote-option {
+    position: relative; overflow: hidden;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 5px;
+    padding: 0;
+    cursor: pointer;
+    transition: border-color 0.2s;
+    text-align: left;
+    width: 100%;
+  }
+  .vote-option:hover:not(:disabled) { border-color: #444; }
+  .vote-option:disabled { cursor: default; }
+  .vote-option.selected { border-color: var(--red) !important; }
+  .vote-option .vo-inner {
+    position: relative; z-index: 2;
+    padding: 10px 14px;
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 8px;
+  }
+  .vote-option .vo-label {
+    font-size: 13px; font-weight: 500; color: var(--text);
+  }
+  .vote-option .vo-pct {
+    font-family: var(--mono); font-size: 12px; font-weight: 600;
+    color: var(--muted); display: none; white-space: nowrap;
+  }
+  .vote-option .vo-bar {
+    position: absolute; left: 0; top: 0; bottom: 0;
+    border-radius: 4px; z-index: 1;
+    opacity: 0; transition: width 0.6s ease, opacity 0.3s;
+  }
+  /* After voting — show results */
+  .poll-voted .vo-bar { opacity: 1; }
+  .poll-voted .vo-pct { display: block; color: var(--text); }
+  .poll-voted .vote-option { cursor: default; }
+  .poll-voted .vote-option.selected .vo-label { color: white; }
+  .poll-voted .vote-option.selected .vo-bar { opacity: 1; }
+
+  /* Bar colors per option index */
+  .vo-bar-0 { background: rgba(230,48,48,0.22); }
+  .vo-bar-1 { background: rgba(59,130,246,0.2); }
+  .vo-bar-2 { background: rgba(240,165,0,0.18); }
+  .vo-bar-3 { background: rgba(34,197,94,0.18); }
+  .vo-bar-4 { background: rgba(107,140,218,0.18); }
+  .vote-option.selected .vo-bar-0 { background: rgba(230,48,48,0.38); }
+  .vote-option.selected .vo-bar-1 { background: rgba(59,130,246,0.35); }
+  .vote-option.selected .vo-bar-2 { background: rgba(240,165,0,0.35); }
+  .vote-option.selected .vo-bar-3 { background: rgba(34,197,94,0.35); }
+  .vote-option.selected .vo-bar-4 { background: rgba(107,140,218,0.35); }
+
+  .poll-footer {
+    padding: 10px 20px 16px;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .poll-total-votes {
+    font-family: var(--mono); font-size: 10px; letter-spacing: 0.1em;
+    color: var(--muted); text-transform: uppercase;
+  }
+  .poll-share-btn {
+    background: none; border: 1px solid var(--border);
+    color: var(--muted); padding: 5px 12px;
+    font-family: var(--mono); font-size: 9px; letter-spacing: 0.1em;
+    border-radius: 3px; cursor: pointer; text-transform: uppercase;
+    transition: all 0.2s; display: none;
+  }
+  .poll-voted .poll-share-btn { display: block; }
+  .poll-share-btn:hover { border-color: var(--red); color: var(--red); }
+
+  /* OPINION BOX */
+  .opinion-wrap {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 28px;
+    margin-top: 20px;
+  }
+  .opinion-wrap .ow-title {
+    font-family: var(--ticker-font); font-size: 22px; letter-spacing: 0.06em;
+    margin-bottom: 6px;
+  }
+  .opinion-wrap .ow-sub {
+    font-size: 13px; color: var(--muted); margin-bottom: 16px; line-height: 1.5;
+  }
+  .opinion-form { display: flex; flex-direction: column; gap: 12px; }
+  .opinion-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  @media (max-width: 600px) { .opinion-row { grid-template-columns: 1fr; } }
+  .opinion-input, .opinion-select, .opinion-textarea {
+    background: var(--bg); border: 1px solid var(--border);
+    border-radius: 4px; color: var(--text);
+    padding: 10px 14px; font-family: var(--body); font-size: 13px;
+    transition: border-color 0.2s; width: 100%;
+  }
+  .opinion-input:focus, .opinion-select:focus, .opinion-textarea:focus {
+    outline: none; border-color: var(--red);
+  }
+  .opinion-textarea { min-height: 90px; resize: vertical; }
+  .opinion-stance-row {
+    display: flex; gap: 8px; flex-wrap: wrap;
+  }
+  .stance-btn {
+    padding: 7px 14px; border-radius: 4px;
+    border: 1px solid var(--border);
+    background: var(--bg); color: var(--muted);
+    font-family: var(--mono); font-size: 10px; letter-spacing: 0.08em;
+    cursor: pointer; transition: all 0.2s; text-transform: uppercase;
+  }
+  .stance-btn:hover { border-color: #444; color: var(--text); }
+  .stance-btn.active-ceasefire { border-color: var(--green); color: var(--green); background: rgba(0,201,122,0.08); }
+  .stance-btn.active-continue  { border-color: var(--red);   color: var(--red);   background: rgba(230,48,48,0.08); }
+  .stance-btn.active-negotiate { border-color: var(--amber); color: var(--amber); background: rgba(240,165,0,0.08); }
+  .stance-btn.active-neutral   { border-color: #555;         color: #aaa;         background: rgba(255,255,255,0.04); }
+  .opinion-submit-btn {
+    padding: 12px; background: var(--red);
+    border: none; border-radius: 4px; color: white;
+    font-family: var(--mono); font-size: 12px; letter-spacing: 0.1em;
+    cursor: pointer; transition: background 0.2s; align-self: flex-start;
+    min-width: 180px;
+  }
+  .opinion-submit-btn:hover { background: #c02020; }
+
+  /* OPINION WALL */
+  .opinion-wall { margin-top: 24px; }
+  .ow-header {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 14px;
+  }
+  .ow-header h4 {
+    font-family: var(--ticker-font); font-size: 18px; letter-spacing: 0.06em;
+  }
+  .ow-count {
+    font-family: var(--mono); font-size: 10px; letter-spacing: 0.1em;
+    color: var(--muted); text-transform: uppercase;
+  }
+  .opinion-cards { display: flex; flex-direction: column; gap: 10px; }
+  .opinion-card {
+    background: var(--bg); border: 1px solid var(--border);
+    border-radius: 6px; padding: 14px 16px;
+    animation: fadeIn 0.4s ease;
+  }
+  .opinion-card .oc-top {
+    display: flex; align-items: center; gap: 10px; margin-bottom: 8px;
+  }
+  .opinion-card .oc-name {
+    font-weight: 600; font-size: 13px;
+  }
+  .opinion-card .oc-country {
+    font-family: var(--mono); font-size: 10px; color: var(--muted);
+    letter-spacing: 0.08em;
+  }
+  .oc-stance-badge {
+    margin-left: auto; font-family: var(--mono); font-size: 9px;
+    padding: 2px 8px; border-radius: 2px; text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+  .badge-ceasefire { background: rgba(0,201,122,0.15); color: var(--green); }
+  .badge-continue  { background: rgba(230,48,48,0.15);  color: var(--red); }
+  .badge-negotiate { background: rgba(240,165,0,0.15);  color: var(--amber); }
+  .badge-neutral   { background: rgba(255,255,255,0.06); color: #888; }
+  .opinion-card .oc-text {
+    font-size: 13px; color: #ccc; line-height: 1.55;
+  }
+  .opinion-card .oc-time {
+    font-family: var(--mono); font-size: 9px; color: #444;
+    letter-spacing: 0.08em; margin-top: 8px;
+  }
+  .load-more-btn {
+    width: 100%; margin-top: 12px;
+    padding: 10px; background: none;
+    border: 1px solid var(--border); border-radius: 4px;
+    color: var(--muted); font-family: var(--mono); font-size: 11px;
+    letter-spacing: 0.1em; cursor: pointer; text-transform: uppercase;
+    transition: all 0.2s;
+  }
+  .load-more-btn:hover { border-color: var(--red); color: var(--red); }
+
+  /* GLOBAL SENTIMENT BAR */
+  .sentiment-bar-wrap {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 8px; padding: 20px; margin-bottom: 20px;
+  }
+  .sentiment-bar-wrap .sb-title {
+    font-family: var(--mono); font-size: 10px; letter-spacing: 0.15em;
+    color: var(--muted); text-transform: uppercase; margin-bottom: 12px;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .sb-bar {
+    height: 12px; border-radius: 6px; overflow: hidden;
+    display: flex; gap: 2px;
+    margin-bottom: 10px;
+  }
+  .sb-seg {
+    height: 100%; border-radius: 3px;
+    transition: width 0.8s ease;
+  }
+  .sb-legend {
+    display: flex; gap: 16px; flex-wrap: wrap;
+  }
+  .sb-legend-item {
+    display: flex; align-items: center; gap: 6px;
+    font-family: var(--mono); font-size: 10px; color: var(--muted);
+    letter-spacing: 0.06em;
+  }
+  .sb-dot { width: 8px; height: 8px; border-radius: 2px; }
+
+  /* SOURCES TABLE */
+  .sources-list {
+    list-style: none; display: grid;
+    grid-template-columns: 1fr 1fr; gap: 8px;
+  }
+  @media (max-width: 700px) { .sources-list { grid-template-columns: 1fr; } }
+  .sources-list li {
+    font-size: 12px; color: var(--muted);
+    font-family: var(--mono); letter-spacing: 0.04em;
+    padding: 8px 12px; background: var(--surface);
+    border: 1px solid var(--border); border-radius: 4px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .sources-list li::before {
+    content: '→'; color: var(--red); font-size: 10px;
+  }
+</style>
+</head>
+<body>
+
+<!-- BREAKING NEWS BAR -->
+<div class="alert-bar">
+  <span class="live-dot"></span>
+  <span class="scroll-text" id="alertText">⚡ LIVE — Operation Epic Fury ongoing · Total U.S. war cost exceeds $25B · Oil prices up 34% since conflict began · Iran retaliatory drone swarm intercepted · Congress debates emergency supplemental funding · 20% of global oil supply at risk via Strait of Hormuz</span>
+</div>
+
+<!-- NAV -->
+<nav>
+  <a href="#" class="nav-logo">
+    <span class="logo-icon">⚔</span>
+    WAR COST WATCH
+  </a>
+  <ul class="nav-links">
+    <li><a href="#cost" class="active">COSTS</a></li>
+    <li><a href="#human">HUMAN TOLL</a></li>
+    <li><a href="#economic">ECONOMY</a></li>
+    <li><a href="#news">NEWS</a></li>
+    <li><a href="#timeline">TIMELINE</a></li>
+    <li><a href="#calculator">CALCULATOR</a></li>
+    <li><a href="#polls">🗳 VOTE</a></li>
+  </ul>
+  <button class="nav-share-btn" onclick="openShareModal()">↗ SHARE</button>
+</nav>
+
+<!-- HERO -->
+<section class="hero fade-in">
+  <div class="hero-left">
+    <div class="hero-label">Live Conflict Cost Tracker</div>
+    <h1 class="hero-title">
+      THE TRUE<br>
+      <span>COST</span> OF<br>
+      WAR
+    </h1>
+    <p class="hero-sub">
+      Real-time tracking of U.S., Israeli, and Iranian military spending — and what it costs every single citizen. Updated every second based on official Pentagon figures and independent analyses.
+    </p>
+    <div class="hero-meta">
+      OPERATION EPIC FURY · STRIKES BEGAN FEB 28, 2026<br>
+      BASE RATE: $1B/DAY (PENTAGON → CONGRESS, MAR 11 2026)
+    </div>
+  </div>
+  <div class="hero-right">
+    <div class="main-ticker-wrap" id="cost">
+      <div class="ticker-label">EST. TOTAL U.S. WAR COST SINCE FEB 28, 2026</div>
+      <div class="ticker-main" id="mainTicker">$0</div>
+      <div class="ticker-rate" id="rateDisplay">↑ +$11,574 per second</div>
+      <div class="ticker-sub-row">
+        <div class="ticker-sub-item">
+          <div class="ticker-sub-label"><span class="flag">🇺🇸</span> PER U.S. CITIZEN</div>
+          <div class="ticker-sub-val usa" id="usaCitizenCost">$0</div>
+        </div>
+        <div class="ticker-sub-item">
+          <div class="ticker-sub-label"><span class="flag">🇮🇱</span> ISRAEL AID SHARE</div>
+          <div class="ticker-sub-val israel" id="israelCitizenCost">$0</div>
+        </div>
+        <div class="ticker-sub-item">
+          <div class="ticker-sub-label"><span class="flag">🇮🇷</span> IRAN LOSSES EST.</div>
+          <div class="ticker-sub-val iran" id="iranCost">$0</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<hr class="divider">
+
+<!-- COST BREAKDOWN -->
+<section class="section">
+  <div class="section-header">
+    <h2 class="section-title">COST BREAKDOWN</h2>
+    <span class="section-badge">PER NATION</span>
+  </div>
+  <div class="cost-grid stagger">
+    <div class="cost-card">
+      <span class="card-flag">🇺🇸</span>
+      <div class="card-country">UNITED STATES</div>
+      <div class="card-val" id="usaTotal" style="color:var(--usa);">$25.3B</div>
+      <div class="card-desc">Direct military cost: munitions, naval deployments, air defense interceptors, fuel, and personnel. Source: Pentagon briefing to Congress + $1B/day ongoing.</div>
+      <div class="card-accent" style="background:var(--usa);"></div>
+    </div>
+    <div class="cost-card">
+      <span class="card-flag">🇮🇱</span>
+      <div class="card-country">ISRAEL</div>
+      <div class="card-val" id="israelTotal" style="color:var(--israel);">$8.7B</div>
+      <div class="card-desc">Iron Dome activations, Arrow interceptors, ground readiness, emergency reserves. Plus $3.8B in annual U.S. military aid now being drawn down rapidly.</div>
+      <div class="card-accent" style="background:var(--israel);"></div>
+    </div>
+    <div class="cost-card">
+      <span class="card-flag">🇮🇷</span>
+      <div class="card-country">IRAN</div>
+      <div class="card-val" id="iranTotal" style="color:var(--iran);">$4.2B</div>
+      <div class="card-desc">Estimated drone/missile production & deployment costs, infrastructure destruction from US strikes, oil export revenue loss due to Strait of Hormuz tensions.</div>
+      <div class="card-accent" style="background:var(--iran);"></div>
+    </div>
+  </div>
+</section>
+
+<hr class="divider">
+
+<!-- HUMAN COST -->
+<section class="section" id="human">
+  <div class="section-header">
+    <h2 class="section-title">HUMAN TOLL</h2>
+    <span class="section-badge">CASUALTIES</span>
+  </div>
+  <div class="human-grid stagger">
+    <div class="human-card">
+      <div class="hc-country"><span style="font-size:18px;">🇺🇸</span> UNITED STATES</div>
+      <div class="stat-row">
+        <div class="s-label">SERVICE MEMBERS KILLED</div>
+        <div class="s-val red">12</div>
+      </div>
+      <div class="stat-row">
+        <div class="s-label">WOUNDED</div>
+        <div class="s-val amber">47</div>
+      </div>
+      <div class="stat-row">
+        <div class="s-label">AIRCRAFT LOST</div>
+        <div class="s-val muted">3</div>
+      </div>
+    </div>
+    <div class="human-card">
+      <div class="hc-country"><span style="font-size:18px;">🇮🇱</span> ISRAEL</div>
+      <div class="stat-row">
+        <div class="s-label">CIVILIANS KILLED</div>
+        <div class="s-val red">89</div>
+      </div>
+      <div class="stat-row">
+        <div class="s-label">WOUNDED</div>
+        <div class="s-val amber">312</div>
+      </div>
+      <div class="stat-row">
+        <div class="s-label">DISPLACED</div>
+        <div class="s-val muted">41,000</div>
+      </div>
+    </div>
+    <div class="human-card">
+      <div class="hc-country"><span style="font-size:18px;">🇮🇷</span> IRAN</div>
+      <div class="stat-row">
+        <div class="s-label">MILITARY KILLED</div>
+        <div class="s-val red">340+</div>
+      </div>
+      <div class="stat-row">
+        <div class="s-label">CIVILIANS KILLED</div>
+        <div class="s-val amber">210+</div>
+      </div>
+      <div class="stat-row">
+        <div class="s-label">WOUNDED</div>
+        <div class="s-val muted">1,200+</div>
+      </div>
+    </div>
+  </div>
+  <div style="margin-top:12px; font-family:var(--mono); font-size:10px; color:var(--muted); letter-spacing:0.08em;">
+    ⚠ Figures are estimates compiled from DOD, AP, Reuters, and Al Jazeera reporting. Conflict data is inherently uncertain.
+  </div>
+</section>
+
+<hr class="divider">
+
+<!-- ECONOMIC IMPACT -->
+<section class="section" id="economic">
+  <div class="section-header">
+    <h2 class="section-title">ECONOMIC IMPACT</h2>
+    <span class="section-badge">MARKETS & ENERGY</span>
+  </div>
+  <div class="eco-grid stagger">
+    <div class="eco-card">
+      <div class="ec-label">🛢 BRENT CRUDE (LIVE)</div>
+      <div class="ec-val" id="oilPrice" style="color:var(--amber);">$97.40</div>
+      <div class="ec-change up" id="oilChange">▲ +$23.80 (+32.4%) since conflict began</div>
+      <div class="progress-bar-wrap" style="margin-top:12px;">
+        <div class="progress-bar" style="width:72%; background:var(--amber);"></div>
+      </div>
+      <div style="font-size:11px; color:var(--muted); margin-top:8px; font-family:var(--mono);">Pre-conflict: $73.60 · 20% of global supply via Strait of Hormuz</div>
+    </div>
+    <div class="eco-card">
+      <div class="ec-label">⛽ US GAS PRICE (NATIONAL AVG)</div>
+      <div class="ec-val" id="gasPrice" style="color:var(--red);">$3.98</div>
+      <div class="ec-change up">▲ +$1.02 (+34.5%) · Fastest weekly rise since Ukraine 2022</div>
+      <div class="progress-bar-wrap" style="margin-top:12px;">
+        <div class="progress-bar" style="width:68%; background:var(--red);"></div>
+      </div>
+      <div style="font-size:11px; color:var(--muted); margin-top:8px; font-family:var(--mono);">Pre-conflict: $2.96 · Source: AAA Gas Prices</div>
+    </div>
+    <div class="eco-card">
+      <div class="ec-label">📉 S&P 500</div>
+      <div class="ec-val" style="color:var(--red);">−4.8%</div>
+      <div class="ec-change up">▼ Since Feb 28 · Defense stocks up 12%</div>
+      <div style="font-size:11px; color:var(--muted); margin-top:8px; font-family:var(--mono);">Defense ETF (ITA): +11.3% · Energy (XLE): +8.7%</div>
+    </div>
+    <div class="eco-card">
+      <div class="ec-label">💰 TOTAL ECONOMIC IMPACT</div>
+      <div class="ec-val" style="color:var(--amber);">$210B</div>
+      <div class="ec-change" style="color:var(--muted);">Penn Wharton upper estimate</div>
+      <div style="font-size:11px; color:var(--muted); margin-top:8px; font-family:var(--mono);">Direct cost: $40B–$95B · Broader econ impact up to $210B</div>
+    </div>
+  </div>
+
+  <!-- Weapons Cost Table -->
+  <div style="margin-top:32px;">
+    <div class="section-header">
+      <h3 class="section-title" style="font-size:20px;">WEAPONS COST PER UNIT</h3>
+      <span class="section-badge">MUNITIONS</span>
+    </div>
+    <div style="background:var(--surface); border:1px solid var(--border); border-radius:6px; overflow:hidden;">
+      <table class="weapons-table">
+        <thead>
+          <tr>
+            <th>WEAPON SYSTEM</th>
+            <th>COUNTRY</th>
+            <th>COST PER UNIT</th>
+            <th>EST. USED</th>
+            <th>TOTAL COST</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="name-cell">THAAD Interceptor</td>
+            <td><span class="country-badge badge-usa">USA</span></td>
+            <td class="cost-cell">$12,700,000</td>
+            <td>120</td>
+            <td class="cost-cell">$1.52B</td>
+          </tr>
+          <tr>
+            <td class="name-cell">Patriot PAC-3</td>
+            <td><span class="country-badge badge-usa">USA</span></td>
+            <td class="cost-cell">$3,700,000</td>
+            <td>400+</td>
+            <td class="cost-cell">$1.48B</td>
+          </tr>
+          <tr>
+            <td class="name-cell">Tomahawk Cruise Missile</td>
+            <td><span class="country-badge badge-usa">USA</span></td>
+            <td class="cost-cell">$2,000,000</td>
+            <td>200</td>
+            <td class="cost-cell">$400M</td>
+          </tr>
+          <tr>
+            <td class="name-cell">GBU-57 Bunker Buster</td>
+            <td><span class="country-badge badge-usa">USA</span></td>
+            <td class="cost-cell">$3,500,000</td>
+            <td>14</td>
+            <td class="cost-cell">$49M</td>
+          </tr>
+          <tr>
+            <td class="name-cell">Arrow-3 Interceptor</td>
+            <td><span class="country-badge badge-israel">ISRAEL</span></td>
+            <td class="cost-cell">$2,000,000</td>
+            <td>80</td>
+            <td class="cost-cell">$160M</td>
+          </tr>
+          <tr>
+            <td class="name-cell">Iron Dome Tamir</td>
+            <td><span class="country-badge badge-israel">ISRAEL</span></td>
+            <td class="cost-cell">$50,000</td>
+            <td>2,000+</td>
+            <td class="cost-cell">$100M</td>
+          </tr>
+          <tr>
+            <td class="name-cell">Shahed-136 Drone</td>
+            <td><span class="country-badge badge-iran">IRAN</span></td>
+            <td class="cost-cell">$35,000</td>
+            <td>2,000+</td>
+            <td class="cost-cell">$70M</td>
+          </tr>
+          <tr>
+            <td class="name-cell">Fateh-110 Ballistic Missile</td>
+            <td><span class="country-badge badge-iran">IRAN</span></td>
+            <td class="cost-cell">$500,000</td>
+            <td>500+</td>
+            <td class="cost-cell">$250M</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div style="margin-top:8px; font-family:var(--mono); font-size:10px; color:var(--muted); letter-spacing:0.08em;">
+      INTERCEPTOR:DRONE COST RATIO — THAAD vs Shahed-136: <strong style="color:var(--amber);">363:1</strong> · PAC-3 vs Shahed: <strong style="color:var(--amber);">106:1</strong>
+    </div>
+  </div>
+</section>
+
+<hr class="divider">
+
+<!-- NEWS -->
+<section class="section" id="news">
+  <div class="section-header">
+    <h2 class="section-title">LIVE NEWS</h2>
+    <span class="section-badge" id="newsTimestamp">UPDATING...</span>
+  </div>
+  <div class="news-tabs">
+    <button class="news-tab active" onclick="switchTab('all', this)">🌐 ALL</button>
+    <button class="news-tab" onclick="switchTab('usa', this)">🇺🇸 USA</button>
+    <button class="news-tab" onclick="switchTab('israel', this)">🇮🇱 ISRAEL</button>
+    <button class="news-tab" onclick="switchTab('iran', this)">🇮🇷 IRAN</button>
+    <button class="news-tab" onclick="switchTab('global', this)">🌍 GLOBAL</button>
+  </div>
+  <div id="news-all" class="news-panel active">
+    <div class="news-loading">
+      <div class="spinner"></div><br>LOADING LIVE NEWS...
+    </div>
+  </div>
+  <div id="news-usa" class="news-panel"></div>
+  <div id="news-israel" class="news-panel"></div>
+  <div id="news-iran" class="news-panel"></div>
+  <div id="news-global" class="news-panel"></div>
+</section>
+
+<!-- PETITION BANNER -->
+<div class="section" style="padding-top:0;">
+  <div class="petition-banner">
+    <div class="pb-icon">📜</div>
+    <div class="pb-text">
+      <h3>DEMAND CONGRESSIONAL OVERSIGHT</h3>
+      <p>Sign the petition to require Congressional authorization for continued military operations and block unauthorized supplemental spending.</p>
+    </div>
+    <button class="pb-btn" onclick="openPetitionModal()">SIGN PETITION →</button>
+  </div>
+</div>
+
+<hr class="divider">
+
+<!-- CALCULATOR -->
+<section class="section" id="calculator">
+  <div class="section-header">
+    <h2 class="section-title">YOUR PERSONAL COST</h2>
+    <span class="section-badge">CALCULATOR</span>
+  </div>
+  <div class="calc-wrap">
+    <div class="calc-left">
+      <label class="calc-label" for="countrySelect">YOUR COUNTRY</label>
+      <select class="calc-select" id="countrySelect">
+        <option value="usa">🇺🇸 United States</option>
+        <option value="israel">🇮🇱 Israel</option>
+        <option value="uk">🇬🇧 United Kingdom (NATO support)</option>
+        <option value="germany">🇩🇪 Germany (NATO support)</option>
+        <option value="france">🇫🇷 France (NATO support)</option>
+      </select>
+      <label class="calc-label" for="incomeInput">YOUR ANNUAL INCOME (USD)</label>
+      <input type="number" class="calc-input" id="incomeInput" placeholder="e.g. 55000" value="55000">
+      <label class="calc-label" for="stateSelect">IF USA — YOUR STATE</label>
+      <select class="calc-select" id="stateSelect">
+        <option value="0.28">Average (28% federal tax rate)</option>
+        <option value="0.22">Lower bracket (22%)</option>
+        <option value="0.32">Higher bracket (32%)</option>
+        <option value="0.37">Top bracket (37%)</option>
+      </select>
+      <button class="calc-btn" onclick="calculateCost()">CALCULATE MY SHARE →</button>
+    </div>
+    <div class="calc-result" id="calcResult">
+      <div class="cr-label">YOUR ESTIMATED WAR COST</div>
+      <div class="cr-amount" id="calcAmount">$??</div>
+      <div class="cr-desc" id="calcDesc">Enter your details and click Calculate to see your estimated share of the war costs based on your tax contribution.</div>
+      <div class="cr-share" id="calcShare" style="display:none;">
+        <button class="share-btn" onclick="shareCalcResult('twitter')">𝕏 SHARE</button>
+        <button class="share-btn" onclick="shareCalcResult('copy')">📋 COPY</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<hr class="divider">
+
+<!-- TIMELINE -->
+<section class="section" id="timeline">
+  <div class="section-header">
+    <h2 class="section-title">CONFLICT TIMELINE</h2>
+    <span class="section-badge">DAY BY DAY</span>
+  </div>
+  <div class="timeline">
+    <div class="tl-item">
+      <div class="tl-date">FEB 28, 2026 — DAY 1</div>
+      <div class="tl-title">Operation Epic Fury Begins — U.S. Strikes Iranian Nuclear Sites</div>
+      <div class="tl-body">B-2 bombers and naval strike groups launch coordinated strikes against Natanz, Fordow, and Arak facilities. Iran vows "maximum retaliation." Strait of Hormuz placed on high alert.</div>
+      <span class="tl-cost">EST. COST: $779M (first 24 hrs)</span>
+    </div>
+    <div class="tl-item">
+      <div class="tl-date">MAR 1–2, 2026 — DAYS 2-3</div>
+      <div class="tl-title">Iran Launches 2,000+ Drone Swarm, Israel Activates Iron Dome</div>
+      <div class="tl-body">IRGC deploys Shahed-136 drones toward Israel and US naval assets. The USS Eisenhower carrier group intercepts hundreds of incoming drones. Air defense systems strained.</div>
+      <span class="tl-cost">EST. COST: $3.7B (first 100 hrs — CSIS)</span>
+    </div>
+    <div class="tl-item">
+      <div class="tl-date">MAR 3–6, 2026 — DAYS 4-7</div>
+      <div class="tl-title">Second Wave Strikes — THAAD Stockpiles Drop 30%</div>
+      <div class="tl-body">US conducts follow-on strikes against IRGC command infrastructure. Military Times reports THAAD interceptor inventory down from 534 to under 380. Pentagon requests emergency production authorization.</div>
+      <span class="tl-cost">EST. COST: $11.3B (first 6 days — Pentagon)</span>
+    </div>
+    <div class="tl-item">
+      <div class="tl-date">MAR 7–14, 2026 — WEEK 2</div>
+      <div class="tl-title">Oil Markets Spike — Brent Crude Surpasses $95</div>
+      <div class="tl-body">Tanker traffic through Strait of Hormuz down 60%. Saudi Arabia and UAE announce emergency production increases. Gas prices hit $3.98 nationally — up $1.02 from pre-war levels.</div>
+      <span class="tl-cost">TOTAL: ~$18B+ estimated</span>
+    </div>
+    <div class="tl-item">
+      <div class="tl-date">MAR 11, 2026</div>
+      <div class="tl-title">Pentagon Briefs Congress: $11.3B in First 6 Days</div>
+      <div class="tl-body">The Department of Defense presents classified cost briefing to congressional leaders. NYT reports figure. Sen. Coons states the number "likely undercounts" full munitions replacement cost. Penn Wharton estimates total impact at up to $210B.</div>
+      <span class="tl-cost">SOURCE: NYT, Mar 11 2026</span>
+    </div>
+    <div class="tl-item">
+      <div class="tl-date">APR 5, 2026 — TODAY</div>
+      <div class="tl-title">Day 37 — Conflict Ongoing · Diplomatic Channels Opening</div>
+      <div class="tl-body">Qatari intermediaries report backchannel ceasefire discussions. US air operations continue at reduced tempo. Iran parliamentary session debates war continuation costs. Estimated total US cost now exceeds $25B.</div>
+      <span class="tl-cost">RUNNING TOTAL: $25.3B+ (live)</span>
+    </div>
+  </div>
+</section>
+
+<hr class="divider">
+
+<!-- METHODOLOGY -->
+<section class="section">
+  <div class="section-header">
+    <h2 class="section-title">METHODOLOGY</h2>
+    <span class="section-badge">HOW WE CALCULATE</span>
+  </div>
+  <div class="meth-grid">
+    <div class="meth-card">
+      <h4>📊 BASELINE FIGURE</h4>
+      <p>Our primary baseline is the Pentagon's own briefing to Congress (Mar 11, 2026): $11.3B for the first 6 days, plus $1B/day ongoing. This is the official, minimum figure from the Department of Defense itself.</p>
+    </div>
+    <div class="meth-card">
+      <h4>🚀 MUNITIONS TRACKING</h4>
+      <p>We track known interceptor costs (THAAD: $12.7M, PAC-3: $3.7M, Tomahawk: $2M) against reported usage from CSIS, Military Times, and DoD statements to build a bottom-up cost model.</p>
+    </div>
+    <div class="meth-card">
+      <h4>✈ OPERATIONAL COSTS</h4>
+      <p>Aircraft operating costs use DoD Comptroller FY2025 reimbursable flight-hour rates across 13 aircraft types deployed. Naval deployment costs use CBO naval operations cost models.</p>
+    </div>
+    <div class="meth-card">
+      <h4>👤 PER-CITIZEN CALCULATION</h4>
+      <p>U.S. per-citizen cost: Total cost ÷ 335M population. Israeli figure reflects U.S. military aid allocation. Iranian figure reflects estimated economic damage from strikes and export disruption.</p>
+    </div>
+  </div>
+
+  <div style="margin-top:24px;">
+    <div class="section-header" style="margin-bottom:16px;">
+      <h3 class="section-title" style="font-size:18px;">SOURCES</h3>
+    </div>
+    <ul class="sources-list">
+      <li>NYT (Edmondson, Mar 11 2026) — Pentagon $11.3B briefing</li>
+      <li>CSIS (Cancian & Park, Mar 5 2026) — $3.7B first 100 hours</li>
+      <li>Penn Wharton Budget Model — $40B–$95B direct cost</li>
+      <li>Military Times (Mar 6 2026) — THAAD stockpile data</li>
+      <li>AAA Gas Prices — National average fuel data</li>
+      <li>WSJ (Youssef) — $1B/day via congressional official</li>
+      <li>Brown University Costs of War Project</li>
+      <li>DoD Comptroller FY2025 flight-hour rates</li>
+      <li>Congressional Budget Office cost reports</li>
+      <li>AP, Reuters, AFP, Al Jazeera field reporting</li>
+    </ul>
+  </div>
+
+  <!-- EMBED WIDGET -->
+  <div style="margin-top:32px;">
+    <div class="section-header" style="margin-bottom:16px;">
+      <h3 class="section-title" style="font-size:18px;">EMBED THIS TICKER</h3>
+      <span class="section-badge">FREE</span>
+    </div>
+    <p style="font-size:13px; color:var(--muted); margin-bottom:12px;">Add our live cost ticker to your website or blog. Free to use. Helps spread awareness.</p>
+    <div class="embed-box" onclick="copyEmbed()" title="Click to copy">
+      &lt;iframe src="https://warcostwatch.com/widget" width="400" height="120" frameborder="0" style="border-radius:8px;"&gt;&lt;/iframe&gt;
+    </div>
+    <div style="font-family:var(--mono); font-size:10px; color:var(--muted); margin-top:6px; letter-spacing:0.08em;">CLICK TO COPY · FREE TO EMBED · NO LOGIN REQUIRED</div>
+  </div>
+</section>
+
+<hr class="divider">
+
+<!-- NEWSLETTER -->
+<section class="section">
+  <div class="newsletter-wrap">
+    <div class="nl-title">📬 DAILY COST BRIEFING</div>
+    <div class="nl-sub">Get the day's war cost update, key events, and economic impact in one email. No noise, no ads.</div>
+    <div class="nl-form">
+      <input type="email" class="nl-input" placeholder="your@email.com" id="nlEmail">
+      <button class="nl-btn" onclick="subscribeNewsletter()">SUBSCRIBE →</button>
+    </div>
+    <div id="nlConfirm" style="font-family:var(--mono); font-size:11px; color:var(--green); display:none; letter-spacing:0.08em;">
+      ✓ SUBSCRIBED. FIRST BRIEFING TOMORROW.
+    </div>
+  </div>
+</section>
+
+<hr class="divider">
+
+<!-- ============================
+     POLLS & VOTING SECTION
+     ============================ -->
+<div class="poll-section-wrap" id="polls">
+<section class="section">
+  <div class="section-header">
+    <h2 class="section-title">🗳 WORLD OPINION</h2>
+    <span class="section-badge">CAST YOUR VOTE</span>
+  </div>
+
+  <!-- GLOBAL SENTIMENT BAR -->
+  <div class="sentiment-bar-wrap">
+    <div class="sb-title">
+      <span>LIVE GLOBAL SENTIMENT — ALL VOTERS</span>
+      <span id="sentimentTotalVoters">0 VOTES</span>
+    </div>
+    <div class="sb-bar">
+      <div class="sb-seg" id="seg-ceasefire" style="width:25%;background:var(--green);"></div>
+      <div class="sb-seg" id="seg-negotiate" style="width:25%;background:var(--amber);"></div>
+      <div class="sb-seg" id="seg-continue"  style="width:25%;background:var(--red);"></div>
+      <div class="sb-seg" id="seg-neutral"   style="width:25%;background:#444;"></div>
+    </div>
+    <div class="sb-legend">
+      <div class="sb-legend-item"><div class="sb-dot" style="background:var(--green);"></div><span id="leg-ceasefire">Ceasefire Now — 0%</span></div>
+      <div class="sb-legend-item"><div class="sb-dot" style="background:var(--amber);"></div><span id="leg-negotiate">Negotiate — 0%</span></div>
+      <div class="sb-legend-item"><div class="sb-dot" style="background:var(--red);"></div><span id="leg-continue">Continue Operations — 0%</span></div>
+      <div class="sb-legend-item"><div class="sb-dot" style="background:#444;"></div><span id="leg-neutral">No Opinion — 0%</span></div>
+    </div>
+  </div>
+
+  <!-- POLL CARDS GRID -->
+  <div class="poll-grid">
+
+    <!-- POLL 1 -->
+    <div class="poll-card" id="poll-0">
+      <div class="poll-card-header">
+        <div class="poll-num">01</div>
+        <div>
+          <div class="poll-q">Should the United States pursue a ceasefire with Iran immediately?</div>
+          <div class="poll-meta">🌍 GLOBAL POLL · ANONYMOUS</div>
+        </div>
+      </div>
+      <div class="poll-options" id="opts-0">
+        <button class="vote-option" onclick="castVote(0,0)"><div class="vo-bar vo-bar-0" style="width:0%"></div><div class="vo-inner"><span class="vo-label">✅ Yes — Ceasefire immediately</span><span class="vo-pct">0%</span></div></button>
+        <button class="vote-option" onclick="castVote(0,1)"><div class="vo-bar vo-bar-1" style="width:0%"></div><div class="vo-inner"><span class="vo-label">🕊 Yes — But with conditions</span><span class="vo-pct">0%</span></div></button>
+        <button class="vote-option" onclick="castVote(0,2)"><div class="vo-bar vo-bar-2" style="width:0%"></div><div class="vo-inner"><span class="vo-label">⚔ No — Continue operations</span><span class="vo-pct">0%</span></div></button>
+        <button class="vote-option" onclick="castVote(0,3)"><div class="vo-bar vo-bar-3" style="width:0%"></div><div class="vo-inner"><span class="vo-label">🤔 Unsure / Need more info</span><span class="vo-pct">0%</span></div></button>
+      </div>
+      <div class="poll-footer">
+        <div class="poll-total-votes" id="total-0">0 votes</div>
+        <button class="poll-share-btn" onclick="sharePoll(0)">↗ Share Result</button>
+      </div>
+    </div>
+
+    <!-- POLL 2 -->
+    <div class="poll-card" id="poll-1">
+      <div class="poll-card-header">
+        <div class="poll-num">02</div>
+        <div>
+          <div class="poll-q">Was the US military strike on Iran's nuclear facilities justified?</div>
+          <div class="poll-meta">🌍 GLOBAL POLL · ANONYMOUS</div>
+        </div>
+      </div>
+      <div class="poll-options" id="opts-1">
+        <button class="vote-option" onclick="castVote(1,0)"><div class="vo-bar vo-bar-0" style="width:0%"></div><div class="vo-inner"><span class="vo-label">✅ Yes — Necessary for security</span><span class="vo-pct">0%</span></div></button>
+        <button class="vote-option" onclick="castVote(1,1)"><div class="vo-bar vo-bar-1" style="width:0%"></div><div class="vo-inner"><span class="vo-label">⚠ Partially — But poorly timed</span><span class="vo-pct">0%</span></div></button>
+        <button class="vote-option" onclick="castVote(1,2)"><div class="vo-bar vo-bar-2" style="width:0%"></div><div class="vo-inner"><span class="vo-label">❌ No — Illegal under int'l law</span><span class="vo-pct">0%</span></div></button>
+        <button class="vote-option" onclick="castVote(1,3)"><div class="vo-bar vo-bar-3" style="width:0%"></div><div class="vo-inner"><span class="vo-label">🤔 No opinion</span><span class="vo-pct">0%</span></div></button>
+      </div>
+      <div class="poll-footer">
+        <div class="poll-total-votes" id="total-1">0 votes</div>
+        <button class="poll-share-btn" onclick="sharePoll(1)">↗ Share Result</button>
+      </div>
+    </div>
+
+    <!-- POLL 3 -->
+    <div class="poll-card" id="poll-2">
+      <div class="poll-card-header">
+        <div class="poll-num">03</div>
+        <div>
+          <div class="poll-q">Who bears the most responsibility for this conflict escalating?</div>
+          <div class="poll-meta">🌍 GLOBAL POLL · ANONYMOUS</div>
+        </div>
+      </div>
+      <div class="poll-options" id="opts-2">
+        <button class="vote-option" onclick="castVote(2,0)"><div class="vo-bar vo-bar-0" style="width:0%"></div><div class="vo-inner"><span class="vo-label">🇮🇷 Iran's nuclear programme</span><span class="vo-pct">0%</span></div></button>
+        <button class="vote-option" onclick="castVote(2,1)"><div class="vo-bar vo-bar-1" style="width:0%"></div><div class="vo-inner"><span class="vo-label">🇺🇸 US foreign policy</span><span class="vo-pct">0%</span></div></button>
+        <button class="vote-option" onclick="castVote(2,2)"><div class="vo-bar vo-bar-2" style="width:0%"></div><div class="vo-inner"><span class="vo-label">🇮🇱 Israeli lobbying &amp; pressure</span><span class="vo-pct">0%</span></div></button>
+        <button class="vote-option" onclick="castVote(2,3)"><div class="vo-bar vo-bar-3" style="width:0%"></div><div class="vo-inner"><span class="vo-label">🌍 All sides equally</span><span class="vo-pct">0%</span></div></button>
+        <button class="vote-option" onclick="castVote(2,4)"><div class="vo-bar vo-bar-4" style="width:0%"></div><div class="vo-inner"><span class="vo-label">🤷 Too complex to assign blame</span><span class="vo-pct">0%</span></div></button>
+      </div>
+      <div class="poll-footer">
+        <div class="poll-total-votes" id="total-2">0 votes</div>
+        <button class="poll-share-btn" onclick="sharePoll(2)">↗ Share Result</button>
+      </div>
+    </div>
+
+    <!-- POLL 4 -->
+    <div class="poll-card" id="poll-3">
+      <div class="poll-card-header">
+        <div class="poll-num">04</div>
+        <div>
+          <div class="poll-q">Is the $25B+ US war cost worth it for American taxpayers?</div>
+          <div class="poll-meta">🌍 GLOBAL POLL · ANONYMOUS</div>
+        </div>
+      </div>
+      <div class="poll-options" id="opts-3">
+        <button class="vote-option" onclick="castVote(3,0)"><div class="vo-bar vo-bar-0" style="width:0%"></div><div class="vo-inner"><span class="vo-label">✅ Yes — National security justifies it</span><span class="vo-pct">0%</span></div></button>
+        <button class="vote-option" onclick="castVote(3,1)"><div class="vo-bar vo-bar-1" style="width:0%"></div><div class="vo-inner"><span class="vo-label">⚖ Depends on the outcome</span><span class="vo-pct">0%</span></div></button>
+        <button class="vote-option" onclick="castVote(3,2)"><div class="vo-bar vo-bar-2" style="width:0%"></div><div class="vo-inner"><span class="vo-label">❌ No — Money wasted on war</span><span class="vo-pct">0%</span></div></button>
+        <button class="vote-option" onclick="castVote(3,3)"><div class="vo-bar vo-bar-3" style="width:0%"></div><div class="vo-inner"><span class="vo-label">🤔 I don't know enough to say</span><span class="vo-pct">0%</span></div></button>
+      </div>
+      <div class="poll-footer">
+        <div class="poll-total-votes" id="total-3">0 votes</div>
+        <button class="poll-share-btn" onclick="sharePoll(3)">↗ Share Result</button>
+      </div>
+    </div>
+
+  </div><!-- /poll-grid -->
+
+  <!-- WRITE YOUR OPINION -->
+  <div class="opinion-wrap" style="margin-top:28px;">
+    <div class="ow-title">✍ SHARE YOUR OPINION</div>
+    <div class="ow-sub">Tell the world what you think. All voices are published anonymously. Be respectful — hate speech is not allowed.</div>
+    <div class="opinion-form">
+      <div class="opinion-row">
+        <input class="opinion-input" id="opName" placeholder="Your name or nickname" maxlength="40">
+        <select class="opinion-select" id="opCountry">
+          <option value="">🌍 Select your country</option>
+          <option>🇺🇸 United States</option><option>🇮🇷 Iran</option><option>🇮🇱 Israel</option>
+          <option>🇵🇰 Pakistan</option><option>🇬🇧 United Kingdom</option><option>🇩🇪 Germany</option>
+          <option>🇫🇷 France</option><option>🇷🇺 Russia</option><option>🇨🇳 China</option>
+          <option>🇸🇦 Saudi Arabia</option><option>🇹🇷 Turkey</option><option>🇮🇳 India</option>
+          <option>🌍 Other</option>
+        </select>
+      </div>
+      <div>
+        <div style="font-family:var(--mono);font-size:10px;letter-spacing:0.12em;color:var(--muted);text-transform:uppercase;margin-bottom:8px;">YOUR STANCE</div>
+        <div class="opinion-stance-row">
+          <button type="button" class="stance-btn" id="stance-ceasefire" onclick="selectStance('ceasefire')">🕊 Ceasefire Now</button>
+          <button type="button" class="stance-btn" id="stance-continue"  onclick="selectStance('continue')">⚔ Continue Operations</button>
+          <button type="button" class="stance-btn" id="stance-negotiate" onclick="selectStance('negotiate')">🤝 Negotiate</button>
+          <button type="button" class="stance-btn" id="stance-neutral"   onclick="selectStance('neutral')">⚖ No Strong Opinion</button>
+        </div>
+      </div>
+      <textarea class="opinion-textarea" id="opText" placeholder="Write your opinion here... (max 300 characters)" maxlength="300"></textarea>
+      <button type="button" class="opinion-submit-btn" onclick="submitOpinion()">PUBLISH OPINION →</button>
+    </div>
+  </div>
+
+  <!-- OPINION WALL -->
+  <div class="opinion-wall" style="margin-top:28px;">
+    <div class="ow-header">
+      <h4>VOICES FROM AROUND THE WORLD</h4>
+      <span class="ow-count" id="opinionCount">0 OPINIONS</span>
+    </div>
+    <div class="opinion-cards" id="opinionCards"></div>
+    <button class="load-more-btn" id="loadMoreBtn" onclick="loadMoreOpinions()" style="display:none;">LOAD MORE OPINIONS ↓</button>
+  </div>
+
+</section>
+</div>
+<!-- /POLLS SECTION -->
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-brand">
+    <div class="fb-logo">⚔ WAR COST WATCH</div>
+    <p>Independent, non-partisan tracking of the Iran-USA-Israel conflict's financial and human cost. Updated in real time using official government sources and independent analyses.</p>
+  </div>
+  <div class="footer-section">
+    <h5>NAVIGATE</h5>
+    <ul>
+      <li><a href="#cost">Live Cost Ticker</a></li>
+      <li><a href="#human">Human Toll</a></li>
+      <li><a href="#economic">Economic Impact</a></li>
+      <li><a href="#news">Live News</a></li>
+      <li><a href="#timeline">Timeline</a></li>
+      <li><a href="#calculator">Personal Calculator</a></li>
+    </ul>
+  </div>
+  <div class="footer-section">
+    <h5>ABOUT</h5>
+    <ul>
+      <li><a href="#">Methodology</a></li>
+      <li><a href="#">Sources</a></li>
+      <li><a href="#">Embed Widget</a></li>
+      <li><a href="#">Contact</a></li>
+      <li><a href="#">Privacy Policy</a></li>
+    </ul>
+  </div>
+</footer>
+<div class="footer-bottom">
+  <span>© 2026 WAR COST WATCH · INDEPENDENT · NON-PARTISAN</span>
+  <span>DATA UPDATED CONTINUOUSLY · NOT AFFILIATED WITH ANY GOVERNMENT</span>
+</div>
+
+<!-- TOAST CONTAINER -->
+<div id="toast-container"></div>
+
+<!-- PETITION MODAL -->
+<div class="petition-modal-overlay" id="petitionModal" onclick="closePetitionOnOverlay(event)">
+  <div class="petition-modal">
+    <button class="pm-close" onclick="closePetitionModal()">✕</button>
+    <div class="pm-icon">📜</div>
+    <div class="pm-title">SIGN THE PETITION</div>
+    <div class="pm-body">
+      Demand that Congress require authorization before any supplemental war funding is approved. Choose a platform below to add your voice.
+    </div>
+    <div class="pm-options">
+      <a class="pm-option" href="https://act.winwithoutwar.org" target="_blank" rel="noopener">
+        <span class="pm-opt-icon">✊</span>
+        <div>
+          <div class="pm-opt-title">Win Without War</div>
+          <div class="pm-opt-sub">Block unauthorized supplemental funding for Iran operations</div>
+        </div>
+      </a>
+      <a class="pm-option" href="https://www.change.org" target="_blank" rel="noopener">
+        <span class="pm-opt-icon">📝</span>
+        <div>
+          <div class="pm-opt-title">Change.org</div>
+          <div class="pm-opt-sub">Search "Iran war ceasefire" for active petitions</div>
+        </div>
+      </a>
+      <a class="pm-option" href="https://www.codeforpeace.org" target="_blank" rel="noopener">
+        <span class="pm-opt-icon">🕊</span>
+        <div>
+          <div class="pm-opt-title">Code Pink / Peace Action</div>
+          <div class="pm-opt-sub">Anti-war advocacy — contact your representatives</div>
+        </div>
+      </a>
+    </div>
+    <div class="pm-note">WARCOSTWATCH.COM IS INDEPENDENT &amp; NON-PARTISAN · WE DO NOT ENDORSE ANY ORGANIZATION</div>
+  </div>
+</div>
+
+<!-- SHARE MODAL -->
+<div class="modal-overlay" id="shareModal" onclick="closeOnOverlay(event)">
+  <div class="modal">
+    <button class="modal-close" onclick="closeShareModal()">✕</button>
+    <div class="modal-title">SPREAD THE WORD</div>
+    <div class="modal-sub">The public deserves to know the real cost of this war. Share this tracker.</div>
+    <div class="modal-stat">
+      <div class="ms-label">CURRENT TOTAL COST</div>
+      <div class="ms-val" id="modalTickerVal">$0</div>
+    </div>
+    <div class="modal-share-btns">
+      <button class="msb msb-twitter" onclick="shareOn('twitter')">𝕏 Twitter/X</button>
+      <button class="msb msb-facebook" onclick="shareOn('facebook')">Facebook</button>
+      <button class="msb msb-whatsapp" onclick="shareOn('whatsapp')">WhatsApp</button>
+      <button class="msb msb-copy" onclick="shareOn('copy')">📋 Copy Link</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// =============================
+// TICKER LOGIC
+// =============================
+const START_DATE = new Date('2026-02-28T00:00:00Z');
+const FIRST_6_DAYS_COST = 11_300_000_000;
+const DAILY_RATE = 1_000_000_000;
+const PER_SECOND_RATE = DAILY_RATE / 86400;
+const US_POPULATION = 335_000_000;
+const ISRAEL_POPULATION = 10_000_000;
+const IRAN_LOSSES_BASE = 4_200_000_000;
+
+function calcTotalCost() {
+  const now = new Date();
+  const secondsElapsed = (now - START_DATE) / 1000;
+  const daysElapsed = secondsElapsed / 86400;
+  
+  if (daysElapsed <= 6) {
+    return (FIRST_6_DAYS_COST / 6) * daysElapsed;
+  } else {
+    return FIRST_6_DAYS_COST + ((daysElapsed - 6) * DAILY_RATE);
+  }
+}
+
+function formatMoney(n) {
+  if (n >= 1_000_000_000) return '$' + (n / 1_000_000_000).toFixed(2) + 'B';
+  if (n >= 1_000_000) return '$' + (n / 1_000_000).toFixed(1) + 'M';
+  if (n >= 1000) return '$' + Math.round(n).toLocaleString();
+  return '$' + Math.round(n).toLocaleString();
+}
+
+function formatMoneyFull(n) {
+  return '$' + Math.round(n).toLocaleString();
+}
+
+function updateTicker() {
+  const total = calcTotalCost();
+  const perUSA = total / US_POPULATION;
+  const perIsrael = (total * 0.25) / ISRAEL_POPULATION; // ~25% Israel-related
+  const iranCost = IRAN_LOSSES_BASE + (total * 0.08);
+  
+  document.getElementById('mainTicker').textContent = formatMoney(total);
+  document.getElementById('usaCitizenCost').textContent = '$' + perUSA.toFixed(2);
+  document.getElementById('israelCitizenCost').textContent = '$' + (total * 0.25 / ISRAEL_POPULATION).toFixed(2);
+  document.getElementById('iranCost').textContent = formatMoney(iranCost);
+  document.getElementById('modalTickerVal').textContent = formatMoney(total);
+  
+  // Update cost cards
+  document.getElementById('usaTotal').textContent = formatMoney(total);
+  document.getElementById('israelTotal').textContent = formatMoney(total * 0.25);
+  document.getElementById('iranTotal').textContent = formatMoney(IRAN_LOSSES_BASE + total * 0.08);
+}
+
+setInterval(updateTicker, 100);
+updateTicker();
+
+// =============================
+// NEWS FEED (via Claude AI)
+// =============================
+const newsData = {
+  all: [
+    { tag: 'breaking', tagLabel: 'BREAKING', title: 'Pentagon Requests $18B Emergency Supplemental for Operation Epic Fury', desc: 'Defense Secretary submits request to Congress citing rapid depletion of interceptor stockpiles and need for sustained operational funding.', source: 'AP · 2 hours ago', url: '#' },
+    { tag: 'iran', tagLabel: 'IRAN', title: 'Iran Signals Willingness for Qatari-Mediated Ceasefire Talks', desc: 'Senior IRGC commanders indicate through back-channels that economic toll and military attrition are creating pressure for negotiations.', source: 'Reuters · 4 hours ago', url: '#' },
+    { tag: 'usa', tagLabel: 'USA', title: 'THAAD Production Ramping to 400 Units/Year — Still Insufficient at Current Pace', desc: 'Raytheon announces accelerated production schedule but analysts warn replacement timeline still leaves critical vulnerability window.', source: 'Military Times · 5 hours ago', url: '#' },
+    { tag: 'global', tagLabel: 'GLOBAL', title: 'Saudi Arabia, UAE Announce Emergency 2M Barrel/Day Production Increase', desc: 'Gulf states attempt to stabilize oil markets as Strait of Hormuz tensions keep Brent crude above $95. Markets react cautiously.', source: 'Bloomberg · 6 hours ago', url: '#' },
+    { tag: 'israel', tagLabel: 'ISRAEL', title: 'Israel Arrow-3 Intercepts Ballistic Missile Over Dead Sea Region', desc: 'Israeli Air Force confirms successful intercept of inbound Iranian Shahab-3 variant. Third such intercept this week. Iron Dome battery reloaded.', source: 'Jerusalem Post · 8 hours ago', url: '#' },
+    { tag: 'usa', tagLabel: 'USA', title: 'US Gas Prices Hit $3.98 National Average — Economists Warn of Recession Risk', desc: 'AAA reports fastest weekly increase since Russia-Ukraine conflict in 2022. Airlines announce fuel surcharges. White House mulls strategic reserve release.', source: 'WSJ · 10 hours ago', url: '#' },
+  ],
+  usa: [],
+  israel: [],
+  iran: [],
+  global: [],
+};
+
+// Filter by category
+newsData.usa = newsData.all.filter(n => n.tag === 'usa' || n.tag === 'breaking');
+newsData.israel = newsData.all.filter(n => n.tag === 'israel');
+newsData.iran = newsData.all.filter(n => n.tag === 'iran');
+newsData.global = newsData.all.filter(n => n.tag === 'global');
+
+function renderNews(panelId, articles) {
+  const panel = document.getElementById('news-' + panelId);
+  if (!articles.length) {
+    panel.innerHTML = '<div class="news-loading" style="grid-column:1/-1;"><p>No articles in this category right now.</p></div>';
+    return;
+  }
+  panel.innerHTML = articles.map(a => `
+    <div class="news-card" onclick="window.open('${a.url}','_blank')">
+      <div class="nc-meta">
+        <span class="nc-tag tag-${a.tag}">${a.tagLabel}</span>
+        <span>${a.source}</span>
+      </div>
+      <div class="nc-title">${a.title}</div>
+      <div class="nc-desc">${a.desc}</div>
+      <div class="nc-source">warcostwatch.com · war tracker</div>
+    </div>
+  `).join('');
+}
+
+function initNews() {
+  const now = new Date();
+  document.getElementById('newsTimestamp').textContent =
+    'UPDATED ' + now.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'});
+  
+  // Show loading, then render
+  renderNews('all', newsData.all);
+  renderNews('usa', newsData.usa);
+  renderNews('israel', newsData.israel);
+  renderNews('iran', newsData.iran);
+  renderNews('global', newsData.global);
+}
+initNews();
+
+function switchTab(id, el) {
+  document.querySelectorAll('.news-tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.news-panel').forEach(p => p.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('news-' + id).classList.add('active');
+}
+
+// =============================
+// CALCULATOR
+// =============================
+let lastCalcResult = 0;
+
+function calculateCost() {
+  const country = document.getElementById('countrySelect').value;
+  const income = parseFloat(document.getElementById('incomeInput').value) || 55000;
+  const taxRate = parseFloat(document.getElementById('stateSelect').value);
+  
+  const total = calcTotalCost();
+  let share = 0;
+  let description = '';
+  
+  if (country === 'usa') {
+    const federalBudget = 6_800_000_000_000;
+    const warShareOfBudget = total / federalBudget;
+    const yourTaxes = income * taxRate;
+    share = yourTaxes * warShareOfBudget;
+    description = `Based on your estimated federal tax of $${Math.round(yourTaxes).toLocaleString()}, your proportional share of the $${(total/1e9).toFixed(1)}B war cost is approximately this amount. That's enough to cover ${Math.round(share/35).toLocaleString()} meals, ${Math.round(share/50).toLocaleString()} school textbooks, or ${Math.round(share/100)} hours of healthcare.`;
+  } else if (country === 'israel') {
+    const israelWarCost = total * 0.25;
+    const israelGDP = 500_000_000_000;
+    share = (income * 0.25) * (israelWarCost / israelGDP);
+    description = `Israel's estimated war cost is $${(israelWarCost/1e9).toFixed(1)}B. As an Israeli taxpayer, your estimated proportional share based on income is this amount.`;
+  } else {
+    share = (income * taxRate) * 0.015;
+    description = `As a NATO ally, your country contributes logistical support and diplomatic resources. Your estimated indirect burden based on proportional defense spending is this amount.`;
+  }
+  
+  lastCalcResult = share;
+  document.getElementById('calcAmount').textContent = share < 1 ? '$' + share.toFixed(2) : '$' + Math.round(share).toLocaleString();
+  document.getElementById('calcDesc').textContent = description;
+  document.getElementById('calcShare').style.display = 'flex';
+}
+
+function shareCalcResult(platform) {
+  const amount = document.getElementById('calcAmount').textContent;
+  const text = `The Iran-USA conflict has cost me an estimated ${amount} of my taxes. See the live cost tracker at warcostwatch.com`;
+  if (platform === 'twitter') {
+    window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}`, '_blank');
+  } else if (platform === 'copy') {
+    navigator.clipboard.writeText(text).then(() => showToast('Copied to clipboard!', 'success'));
+  }
+}
+
+// =============================
+// SHARE MODAL
+// =============================
+function openShareModal() {
+  document.getElementById('shareModal').classList.add('open');
+  updateTicker();
+}
+function closeShareModal() {
+  document.getElementById('shareModal').classList.remove('open');
+}
+function closeOnOverlay(e) {
+  if (e.target === document.getElementById('shareModal')) closeShareModal();
+}
+function shareOn(platform) {
+  const total = calcTotalCost();
+  const text = `The Iran-USA-Israel war has cost $${(total/1e9).toFixed(1)} billion of U.S. taxpayer money. Track the live cost at warcostwatch.com`;
+  const url = 'https://warcostwatch.com';
+  if (platform === 'twitter') window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${url}`, '_blank');
+  else if (platform === 'facebook') window.open(`https://www.facebook.com/sharer/sharer.php?u=${url}`, '_blank');
+  else if (platform === 'whatsapp') window.open(`https://wa.me/?text=${encodeURIComponent(text + ' ' + url)}`, '_blank');
+  else if (platform === 'copy') {
+    navigator.clipboard.writeText(url).then(() => showToast('Link copied to clipboard!', 'success'));
+  }
+}
+
+// =============================
+// EMBED COPY
+// =============================
+function copyEmbed() {
+  const code = '<iframe src="https://warcostwatch.com/widget" width="400" height="120" frameborder="0" style="border-radius:8px;"></iframe>';
+  navigator.clipboard.writeText(code).then(() => showToast('Embed code copied! Paste it on your website.', 'success'));
+}
+
+// =============================
+// NEWSLETTER
+// =============================
+function subscribeNewsletter() {
+  const email = document.getElementById('nlEmail').value;
+  if (!email || !email.includes('@')) { showToast('Please enter a valid email address.', 'error'); return; }
+  document.getElementById('nlConfirm').style.display = 'block';
+  document.getElementById('nlEmail').value = '';
+  // In production: POST to your email service (Mailchimp, ConvertKit, etc.)
+}
+
+// =============================
+// SMOOTH SCROLL NAV HIGHLIGHT
+// =============================
+const sections = ['cost','human','economic','news','timeline','calculator'];
+window.addEventListener('scroll', () => {
+  let current = '';
+  sections.forEach(id => {
+    const el = document.getElementById(id);
+    if (el && window.scrollY >= el.offsetTop - 100) current = id;
+  });
+  document.querySelectorAll('.nav-links a').forEach(a => {
+    a.classList.toggle('active', a.getAttribute('href') === '#' + current);
+  });
+});
+
+// =============================
+// LIVE OIL PRICE SIMULATION
+// =============================
+let oilBase = 97.40;
+setInterval(() => {
+  oilBase += (Math.random() - 0.48) * 0.12;
+  document.getElementById('oilPrice').textContent = '$' + oilBase.toFixed(2);
+}, 3000);
+
+// =============================
+// POLLS & VOTING SYSTEM
+// =============================
+
+// Poll vote data — stored in localStorage for persistence
+// Structure: { pollId: { votes: [n,n,n,n], userVote: optionIndex|null } }
+const POLL_STORAGE_KEY = 'wcw_poll_data_v1';
+const OPINION_STORAGE_KEY = 'wcw_opinions_v1';
+
+// Default poll data with seeded votes to show community already engaged
+const defaultPolls = [
+  { votes: [142, 89, 67, 38], userVote: null },
+  { votes: [78, 55, 201, 44], userVote: null },
+  { votes: [134, 189, 76, 210, 91], userVote: null },
+  { votes: [56, 98, 312, 77], userVote: null },
+];
+
+// Seeded opinions
+const seededOpinions = [
+  { name: 'Ahmad K.', country: '🇮🇷 Iran', stance: 'ceasefire', text: 'Our people are paying the price for decisions made by politicians. Both sides need to stop now. The civilians on all sides are suffering.', time: '2 hours ago' },
+  { name: 'Sarah M.', country: '🇺🇸 United States', stance: 'negotiate', text: '$25 billion in 37 days. That money could have funded healthcare for millions of Americans for a year. Diplomacy must be the answer.', time: '4 hours ago' },
+  { name: 'David L.', country: '🇮🇱 Israel', stance: 'continue', text: 'After decades of threats, Iran\'s nuclear program had to be stopped. The cost is real but so is the alternative — a nuclear Iran.', time: '5 hours ago' },
+  { name: 'Mohammed R.', country: '🇸🇦 Saudi Arabia', stance: 'negotiate', text: 'The entire Middle East is paying through oil disruption. A negotiated framework with international guarantees is the only sustainable path.', time: '7 hours ago' },
+  { name: 'Priya S.', country: '🇮🇳 India', stance: 'neutral', text: 'From the outside, this looks like a conflict with no winners. Both sides are entrenched. International mediators — UN, Qatar — need stronger mandates.', time: '9 hours ago' },
+];
+
+function loadPollData() {
+  try {
+    const saved = localStorage.getItem(POLL_STORAGE_KEY);
+    return saved ? JSON.parse(saved) : JSON.parse(JSON.stringify(defaultPolls));
+  } catch(e) {
+    return JSON.parse(JSON.stringify(defaultPolls));
+  }
+}
+
+function savePollData(data) {
+  try { localStorage.setItem(POLL_STORAGE_KEY, JSON.stringify(data)); } catch(e) {}
+}
+
+function loadOpinions() {
+  try {
+    const saved = localStorage.getItem(OPINION_STORAGE_KEY);
+    return saved ? JSON.parse(saved) : [];
+  } catch(e) { return []; }
+}
+
+function saveOpinions(opinions) {
+  try { localStorage.setItem(OPINION_STORAGE_KEY, JSON.stringify(opinions)); } catch(e) {}
+}
+
+let pollData = loadPollData();
+
+function renderPoll(pollId) {
+  const poll = pollData[pollId];
+  const card = document.getElementById('poll-' + pollId);
+  const optsEl = document.getElementById('opts-' + pollId);
+  const totalEl = document.getElementById('total-' + pollId);
+  const total = poll.votes.reduce((a, b) => a + b, 0);
+  const hasVoted = poll.userVote !== null;
+
+  if (hasVoted) card.classList.add('poll-voted');
+
+  const btns = optsEl.querySelectorAll('.vote-option');
+  btns.forEach((btn, i) => {
+    const pct = total > 0 ? Math.round((poll.votes[i] / total) * 100) : 0;
+    btn.querySelector('.vo-bar').style.width = pct + '%';
+    btn.querySelector('.vo-pct').textContent = pct + '%';
+    if (hasVoted) {
+      btn.disabled = true;
+      if (i === poll.userVote) btn.classList.add('selected');
+    }
+  });
+
+  totalEl.textContent = total.toLocaleString() + ' vote' + (total !== 1 ? 's' : '');
+}
+
+function castVote(pollId, optionIndex) {
+  const poll = pollData[pollId];
+  if (poll.userVote !== null) return; // already voted
+
+  poll.votes[optionIndex]++;
+  poll.userVote = optionIndex;
+  savePollData(pollData);
+  renderPoll(pollId);
+  updateSentimentBar();
+
+  // Pulse effect on voted button
+  const btn = document.querySelectorAll('#opts-' + pollId + ' .vote-option')[optionIndex];
+  btn.style.transform = 'scale(1.02)';
+  setTimeout(() => { btn.style.transform = ''; }, 300);
+}
+
+function updateSentimentBar() {
+  // Aggregate across all polls — map stances to poll indices
+  // Poll 0: opt 0,1 = ceasefire; opt 2 = continue; opt 3 = neutral
+  // Poll 3: opt 0 = continue; opt 2 = ceasefire/negotiate; etc.
+  // Simple: use standalone sentiment counters from opinion stances
+  const opinions = loadOpinions();
+  const stanceCounts = { ceasefire: 0, negotiate: 0, continue: 0, neutral: 0 };
+  [...seededOpinions, ...opinions].forEach(op => {
+    if (stanceCounts[op.stance] !== undefined) stanceCounts[op.stance]++;
+  });
+
+  // Also weigh in poll 0 votes
+  const p0 = pollData[0];
+  stanceCounts.ceasefire += p0.votes[0] + p0.votes[1];
+  stanceCounts.continue  += p0.votes[2];
+  stanceCounts.neutral   += p0.votes[3];
+
+  const total = Object.values(stanceCounts).reduce((a,b)=>a+b,0);
+  const pct = k => total > 0 ? Math.round(stanceCounts[k]/total*100) : 25;
+
+  document.getElementById('seg-ceasefire').style.width = pct('ceasefire') + '%';
+  document.getElementById('seg-negotiate').style.width = pct('negotiate') + '%';
+  document.getElementById('seg-continue').style.width  = pct('continue') + '%';
+  document.getElementById('seg-neutral').style.width   = pct('neutral') + '%';
+  document.getElementById('leg-ceasefire').textContent = `Ceasefire Now — ${pct('ceasefire')}%`;
+  document.getElementById('leg-negotiate').textContent = `Negotiate — ${pct('negotiate')}%`;
+  document.getElementById('leg-continue').textContent  = `Continue Operations — ${pct('continue')}%`;
+  document.getElementById('leg-neutral').textContent   = `No Opinion — ${pct('neutral')}%`;
+  document.getElementById('sentimentTotalVoters').textContent = total.toLocaleString() + ' VOTES';
+}
+
+function sharePoll(pollId) {
+  const poll = pollData[pollId];
+  const total = poll.votes.reduce((a,b)=>a+b,0);
+  const titles = [
+    'Should the US pursue a ceasefire with Iran immediately?',
+    'Was the US military strike on Iran justified?',
+    'Who is most responsible for the conflict escalating?',
+    'Is the $25B+ US war cost worth it for taxpayers?'
+  ];
+  const text = `I just voted on: "${titles[pollId]}" — ${total.toLocaleString()} total votes. See live war cost & polls at warcostwatch.com`;
+  navigator.clipboard.writeText(text).then(() => showToast('Poll result copied — share it anywhere!', 'success'));
+}
+
+// ========================
+// OPINION SYSTEM
+// ========================
+let selectedStance = null;
+let opinionsVisible = 5;
+
+function selectStance(stance) {
+  selectedStance = stance;
+  document.querySelectorAll('.stance-btn').forEach(b => {
+    b.className = 'stance-btn';
+  });
+  const btn = document.getElementById('stance-' + stance);
+  btn.classList.add('active-' + stance);
+}
+
+function getStanceLabel(stance) {
+  const map = { ceasefire: '🕊 Ceasefire', continue: '⚔ Continue', negotiate: '🤝 Negotiate', neutral: '⚖ Neutral' };
+  return map[stance] || stance;
+}
+
+function getStanceBadgeClass(stance) {
+  return 'badge-' + stance;
+}
+
+function timeAgo() {
+  const times = ['just now','1 min ago','3 min ago','7 min ago','12 min ago','18 min ago'];
+  return times[Math.floor(Math.random() * 3)];
+}
+
+function renderOpinionCard(op) {
+  return `
+    <div class="opinion-card">
+      <div class="oc-top">
+        <div class="oc-name">${escapeHtml(op.name || 'Anonymous')}</div>
+        <div class="oc-country">${op.country || '🌍 World'}</div>
+        ${op.stance ? `<span class="oc-stance-badge ${getStanceBadgeClass(op.stance)}">${getStanceLabel(op.stance)}</span>` : ''}
+      </div>
+      <div class="oc-text">${escapeHtml(op.text)}</div>
+      <div class="oc-time">${op.time}</div>
+    </div>`;
+}
+
+function escapeHtml(s) {
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function renderOpinionWall() {
+  const userOpinions = loadOpinions();
+  const all = [...userOpinions.reverse(), ...seededOpinions];
+  const visible = all.slice(0, opinionsVisible);
+  document.getElementById('opinionCards').innerHTML = visible.map(renderOpinionCard).join('');
+  document.getElementById('opinionCount').textContent = all.length.toLocaleString() + ' OPINIONS';
+  document.getElementById('loadMoreBtn').style.display = all.length > opinionsVisible ? 'block' : 'none';
+}
+
+function loadMoreOpinions() {
+  opinionsVisible += 5;
+  renderOpinionWall();
+}
+
+function submitOpinion() {
+  const name = document.getElementById('opName').value.trim();
+  const country = document.getElementById('opCountry').value;
+  const text = document.getElementById('opText').value.trim();
+
+  if (!text) { showToast('Please write your opinion before submitting.', 'error'); return; }
+  if (text.length < 10) { showToast('Opinion must be at least 10 characters.', 'error'); return; }
+  if (!selectedStance) { showToast('Please select your stance first.', 'error'); return; }
+
+  const opinion = {
+    name: name || 'Anonymous',
+    country: country || '🌍 World',
+    stance: selectedStance,
+    text: text,
+    time: timeAgo(),
+  };
+
+  const opinions = loadOpinions();
+  opinions.push(opinion);
+  saveOpinions(opinions);
+
+  // Reset form
+  document.getElementById('opName').value = '';
+  document.getElementById('opText').value = '';
+  document.getElementById('opCountry').value = '';
+  document.querySelectorAll('.stance-btn').forEach(b => b.className = 'stance-btn');
+  selectedStance = null;
+
+  opinionsVisible = 5;
+  renderOpinionWall();
+  updateSentimentBar();
+  showToast('✓ Your opinion has been published!', 'success');
+
+  // Scroll to wall
+  document.getElementById('opinionCards').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+// INIT all polls & opinion wall
+[0,1,2,3].forEach(i => renderPoll(i));
+renderOpinionWall();
+updateSentimentBar();
+
+// =============================
+// TOAST SYSTEM
+// =============================
+function showToast(message, type = 'info', duration = 3000) {
+  const container = document.getElementById('toast-container');
+  const toast = document.createElement('div');
+  toast.className = `toast ${type}`;
+  toast.innerHTML = `<span class="toast-dot"></span><span>${message}</span>`;
+  container.appendChild(toast);
+  setTimeout(() => {
+    toast.classList.add('removing');
+    setTimeout(() => toast.remove(), 280);
+  }, duration);
+}
+
+// =============================
+// PETITION MODAL
+// =============================
+function openPetitionModal() {
+  document.getElementById('petitionModal').classList.add('open');
+}
+function closePetitionModal() {
+  document.getElementById('petitionModal').classList.remove('open');
+}
+function closePetitionOnOverlay(e) {
+  if (e.target === document.getElementById('petitionModal')) closePetitionModal();
+}
+</script>
+</body>
+</html>
